@@ -7,12 +7,12 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 
 import { posterUrl } from '@/api/tmdb';
 import { getMeta } from '@/db/helpers';
-import { getCatalogSummary, type ProviderCount } from '@/db/queries';
+import { getCatalogSummary, type CatalogSummary } from '@/db/queries';
 import { initialStepStates, runSync } from '@/sync/run-sync';
 import type { StepState } from '@/sync/types';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
-type Summary = { providers: ProviderCount[]; total: number; lastSyncAt?: string };
+type Summary = CatalogSummary & { lastSyncAt?: string };
 
 async function fetchSummary(db: SQLiteDatabase): Promise<Summary> {
   const [catalog, meta] = await Promise.all([getCatalogSummary(db), getMeta(db)]);
@@ -69,7 +69,11 @@ export default function SyncScreen() {
       {summary && summary.total > 0 && (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Catálogo</Text>
-          <Text style={styles.total}>{summary.total.toLocaleString('pt-BR')} filmes únicos</Text>
+          <Text style={styles.total}>
+            {summary.total.toLocaleString('pt-BR')} filmes únicos ·{' '}
+            {summary.withRating.toLocaleString('pt-BR')} com nota IMDb · {summary.oscarNominees} indicados ao
+            Oscar ({summary.oscarWinners} vencedores)
+          </Text>
           {summary.providers.map((p) => (
             <View key={p.id} style={styles.providerRow}>
               <Image source={posterUrl(p.logo_path, 'w92')} style={styles.logo} />

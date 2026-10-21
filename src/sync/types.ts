@@ -20,6 +20,9 @@ export type StepContext = {
 export type SyncStep = {
   id: string;
   title: string;
-  /** Retorna uma mensagem final para exibir quando a etapa termina. */
-  run: (ctx: StepContext) => Promise<string | void>;
+  /**
+   * Retorna uma mensagem final para exibir quando a etapa termina, ou
+   * `{ skipped: true, message }` quando não havia nada a fazer.
+   */
+  run: (ctx: StepContext) => Promise<string | void | { skipped: true; message: string }>;
 };

@@ -2,11 +2,13 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { setMeta } from '@/db/helpers';
+import { getCatalogSummary } from '@/db/queries';
 
 import { availabilityStep } from './availability';
 import { detailsStep } from './details';
 import { createImdbRatingsStep } from './imdb-ratings';
 import { expoRatingsSource } from './imdb-source.expo';
+import { oscarStep } from './oscar';
 import { providersStep } from './providers';
 import type { StepState, SyncStep } from './types';
 
@@ -15,6 +17,7 @@ export const SYNC_STEPS: SyncStep[] = [
   availabilityStep,
   detailsStep,
   createImdbRatingsStep(expoRatingsSource),
+  oscarStep,
 ];
 
 const KEEP_AWAKE_TAG = 'vflix-sync';
@@ -41,7 +44,7 @@ export async function runSync(
       states[i] = { ...states[i], status: 'running', message: undefined, progress: undefined };
       emit();
       try {
-        const summary = await step.run({
+        const result = await step.run({
           db,
           signal,
           report: ({ message, progress }) => {
@@ -49,7 +52,10 @@ export async function runSync(
             emit();
           },
         });
-        states[i] = { ...states[i], status: 'done', message: summary || 'Concluído', progress: 1 };
+        states[i] =
+          typeof result === 'object'
+            ? { ...states[i], status: 'skipped', message: result.message, progress: undefined }
+            : { ...states[i], status: 'done', message: result || 'Concluído', progress: 1 };
         emit();
       } catch (err) {
         const message = signal.aborted ? 'Cancelado' : err instanceof Error ? err.message : String(err);
@@ -58,7 +64,14 @@ export async function runSync(
         return false;
       }
     }
-    await setMeta(db, { last_sync_at: new Date().toISOString() });
+    const summary = await getCatalogSummary(db);
+    await setMeta(db, {
+      last_sync_at: new Date().toISOString(),
+      summary_total: summary.total,
+      summary_with_rating: summary.withRating,
+      summary_oscar_nominees: summary.oscarNominees,
+      summary_oscar_winners: summary.oscarWinners,
+    });
     return true;
   } finally {
     deactivateKeepAwake(KEEP_AWAKE_TAG);
