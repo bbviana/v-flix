@@ -4,10 +4,11 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { setMeta } from '@/db/helpers';
 
 import { availabilityStep } from './availability';
+import { detailsStep } from './details';
 import { providersStep } from './providers';
 import type { StepState, SyncStep } from './types';
 
-export const SYNC_STEPS: SyncStep[] = [providersStep, availabilityStep];
+export const SYNC_STEPS: SyncStep[] = [providersStep, availabilityStep, detailsStep];
 
 const KEEP_AWAKE_TAG = 'vflix-sync';
 

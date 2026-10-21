@@ -160,6 +160,7 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
 7. Tela Explorar com filtros.
 8. Tela Início com fileiras.
 9. `eas.json` com perfil `preview` gerando APK (`"android": { "buildType": "apk" }`) e instruções de build (`npx eas build -p android --profile preview`).
+10. **Dump inicial embutido no app:** um `Makefile` (ou Docker) roda a sincronização completa no computador, reaproveitando o código de `src/sync/` em Node com `node:sqlite` e um adaptador para a API do expo-sqlite. O resultado é um `.db` (compactado, se compensar) embutido como asset. Na primeira instalação, o app parte desse banco via `SQLiteProvider` `assetSource`, e o botão "Sincronizar" só busca o que mudou.
 
 ## Verificações
 
