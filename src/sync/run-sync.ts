@@ -5,10 +5,17 @@ import { setMeta } from '@/db/helpers';
 
 import { availabilityStep } from './availability';
 import { detailsStep } from './details';
+import { createImdbRatingsStep } from './imdb-ratings';
+import { expoRatingsSource } from './imdb-source.expo';
 import { providersStep } from './providers';
 import type { StepState, SyncStep } from './types';
 
-export const SYNC_STEPS: SyncStep[] = [providersStep, availabilityStep, detailsStep];
+export const SYNC_STEPS: SyncStep[] = [
+  providersStep,
+  availabilityStep,
+  detailsStep,
+  createImdbRatingsStep(expoRatingsSource),
+];
 
 const KEEP_AWAKE_TAG = 'vflix-sync';
 
