@@ -1,0 +1,112 @@
+# v-flix
+
+App Android pessoal, estilo Netflix, que reúne num só lugar os **filmes** disponíveis por assinatura no **Brasil** em **Netflix, Prime Video, Disney+ e HBO Max**. Cada filme vem com a **nota do IMDb** e a informação de **Oscar de Melhor Filme** (indicado/vencedor), e pode ser filtrado por gênero, país, serviço, nota, votos, ano e Oscar.
+
+Não há backend: o próprio celular baixa os dados, cruza as fontes e guarda tudo num SQLite local. O plano completo está em [`plan.md`](plan.md).
+
+## Como funciona
+
+```
+ Botão "Sincronizar"
+        │
+        ▼
+ ┌──────────────────────────────── sincronização (no celular) ───────────────────────────────┐
+ │ 1. Provedores, gêneros, países ── TMDB                                                     │
+ │ 2. Disponibilidade ────────────── TMDB /discover (por serviço, fatiado por data se > 10k)  │
+ │ 3. Detalhes (incremental) ─────── TMDB /movie/{id} (só filmes novos, 8 em paralelo)        │
+ │ 4. Notas IMDb ─────────────────── datasets.imdbws.com/title.ratings.tsv.gz (streaming)     │
+ │ 5. Oscar de Melhor Filme ──────── Wikidata SPARQL (no máximo a cada 30 dias)               │
+ └────────────────────────────────────────────┬──────────────────────────────────────────────┘
+                                              ▼
+                                     SQLite local (vflix.db)
+                                              │
+                         Início (fileiras) · Explorar (filtros → SQL) · Detalhe
+```
+
+- A sincronização é **manual** e roda com a tela ligada (`expo-keep-awake`). Nada roda em segundo plano.
+- Cada etapa é **retomável**: se cair no meio, a próxima execução continua de onde parou. Na etapa 3, por exemplo, só são buscados os filmes com `details_fetched_at IS NULL`.
+- A tabela `movie_provider` é **substituída inteira** a cada sync. Um filme que sai do catálogo deixa de aparecer nas telas, mas seus detalhes ficam guardados para quando ele voltar.
+- O cruzamento entre as fontes usa o `imdb_id`, que vem do TMDB (`external_ids`).
+
+## Arquitetura
+
+| Camada | Tecnologia |
+|---|---|
+| App | React Native + Expo SDK 58 + TypeScript, roda no Expo Go |
+| Navegação | expo-router (rotas por arquivo em `src/app/`) |
+| Banco | expo-sqlite, migrações versionadas via `PRAGMA user_version` |
+| Rede | `fetch` com retry e backoff exponencial (429/5xx/falha de rede) |
+| Arquivos e gzip | expo-file-system + pako (descompactação em chunks) |
+| UI | `StyleSheet` + tema próprio, expo-image para pôsteres |
+
+### Estrutura de pastas
+
+```
+src/
+  app/            # telas (expo-router): cada arquivo é uma rota, _layout.tsx define o navegador
+  api/
+    http.ts       # fetchWithRetry, mapWithConcurrency
+    tmdb.ts       # cliente da TMDB, tipos das respostas, URLs de imagem
+  db/
+    migrations.ts # esquema SQLite e migrações
+  sync/           # etapas da sincronização (uma por arquivo)
+  theme/          # cores, espaçamentos, tema de navegação
+```
+
+Código que não é tela fica fora de `src/app/`.
+
+### Banco de dados
+
+Tabelas principais: `movie`, `provider`, `genre`, `country`, as tabelas de ligação `movie_genre`, `movie_country` e `movie_provider`, além de `imdb_rating`, `oscar_best_picture` e `sync_meta` (data e contagens da última sync).
+
+Para mudar o esquema, **acrescente** uma nova entrada ao fim do array `MIGRATIONS` em `src/db/migrations.ts`. Nunca edite uma migração que já foi aplicada.
+
+## Desenvolvimento
+
+### Pré-requisitos
+
+- Node **≥ 22.13** (o projeto fixa a versão em `.nvmrc`; com nvm, rode `nvm use`)
+- App **Expo Go** no Android, na versão compatível com o SDK 58
+- Um token de leitura da TMDB: em themoviedb.org, abra **Settings → API** e copie o **API Read Access Token** (a string longa `eyJ...`, não a "API Key")
+
+### Primeiros passos
+
+```bash
+nvm use
+npm install
+cp .env.example .env    # e preencha EXPO_PUBLIC_TMDB_TOKEN
+npx expo start          # escaneie o QR code com o Expo Go
+```
+
+Celular e computador precisam estar na mesma rede. Se não estiverem, use `npx expo start --tunnel`.
+
+### Comandos úteis
+
+```bash
+npx expo install <pacote>   # use sempre este em vez de npm install: escolhe versões compatíveis com o SDK
+npx tsc --noEmit            # typecheck
+npx expo lint               # lint
+npx expo-doctor             # diagnostica dependências e configuração
+```
+
+### Regras
+
+- Só use bibliotecas que rodem no **Expo Go**, sem módulos nativos customizados.
+- A API do Expo muda a cada SDK. Consulte a doc da versão em uso: https://docs.expo.dev/versions/v58.0.0/
+- O token fica exposto no bundle (`EXPO_PUBLIC_*`). Isso é aceitável porque o app é só para uso pessoal e não vai para loja.
+- Para zerar os dados durante o desenvolvimento, limpe os dados do Expo Go ou apague o `vflix.db`.
+
+### Build do APK
+
+> Ainda não configurado. Será adicionado no passo 9 do plano (`eas.json` com o perfil `preview`).
+
+```bash
+npx eas-cli@latest build -p android --profile preview
+```
+
+## Créditos
+
+- Dados de disponibilidade: JustWatch (via TMDB)
+- Este produto usa a API da TMDB, mas não é endossado nem certificado pela TMDB
+- Notas: IMDb datasets (uso pessoal e não comercial)
+- Oscar: Wikidata
