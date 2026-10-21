@@ -1,7 +1,9 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Link, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PosterCard } from '@/components/poster-card';
 import { getPopular, type PosterItem } from '@/db/queries';
@@ -10,6 +12,7 @@ import { colors, radius, spacing, type } from '@/theme';
 // Tela provisória: a Início com fileiras chega no passo 8.
 export default function HomeScreen() {
   const db = useSQLiteContext();
+  const insets = useSafeAreaInsets();
   const [popular, setPopular] = useState<PosterItem[] | null>(null);
 
   useFocusEffect(
@@ -31,7 +34,15 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Início</Text>
+        <Link href="/sync" asChild>
+          <Pressable hitSlop={10} style={({ pressed }) => pressed && { opacity: 0.6 }}>
+            <Ionicons name="sync" size={22} color={colors.text} />
+          </Pressable>
+        </Link>
+      </View>
       <Text style={styles.rowTitle}>Populares</Text>
       <FlatList
         horizontal
@@ -40,10 +51,8 @@ export default function HomeScreen() {
         renderItem={({ item }) => <PosterCard movie={item} width={120} />}
         contentContainerStyle={styles.row}
         showsHorizontalScrollIndicator={false}
+        style={{ flexGrow: 0 }}
       />
-      <View style={styles.footer}>
-        <SyncButton />
-      </View>
     </View>
   );
 }
@@ -59,13 +68,20 @@ function SyncButton() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background, paddingTop: spacing.lg },
+  screen: { flex: 1, backgroundColor: colors.background },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.xl,
+  },
+  title: { ...type.largeTitle, color: colors.text },
   empty: { alignItems: 'center', justifyContent: 'center', gap: spacing.md, paddingHorizontal: spacing.xxl },
   emptyTitle: { ...type.title, color: colors.text },
   emptyText: { ...type.callout, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.md },
   rowTitle: { ...type.headline, color: colors.text, paddingHorizontal: spacing.xl, marginBottom: spacing.md },
   row: { paddingHorizontal: spacing.xl, gap: spacing.sm },
-  footer: { alignItems: 'center', marginTop: spacing.xxl },
   button: {
     backgroundColor: colors.accent,
     borderRadius: radius.pill,

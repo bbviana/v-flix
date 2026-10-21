@@ -1,8 +1,12 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+import { searchKey } from '@/lib/search';
+
+type Migration = string | ((db: SQLiteDatabase) => Promise<void>);
+
 // Cada entrada leva o banco da versão i para i + 1. Nunca edite uma migração
 // já aplicada: acrescente uma nova no fim da lista.
-const MIGRATIONS: string[] = [
+const MIGRATIONS: Migration[] = [
   `
   CREATE TABLE provider (
     id INTEGER PRIMARY KEY,
@@ -55,6 +59,17 @@ const MIGRATIONS: string[] = [
 
   CREATE TABLE sync_meta (key TEXT PRIMARY KEY, value TEXT);
   `,
+
+  // v2: busca sem acento/caixa por título pt-BR e original.
+  async (db) => {
+    await db.execAsync('ALTER TABLE movie ADD COLUMN search_text TEXT');
+    const rows = await db.getAllAsync<{ tmdb_id: number; title: string; original_title: string | null }>(
+      'SELECT tmdb_id, title, original_title FROM movie',
+    );
+    for (const r of rows) {
+      await db.runAsync('UPDATE movie SET search_text = ? WHERE tmdb_id = ?', searchKey(r.title, r.original_title), r.tmdb_id);
+    }
+  },
 ];
 
 export const DATABASE_NAME = 'vflix.db';
@@ -68,7 +83,8 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     const sql = MIGRATIONS[version];
     const next = version + 1;
     await db.withExclusiveTransactionAsync(async (txn) => {
-      await txn.execAsync(sql);
+      if (typeof sql === 'string') await txn.execAsync(sql);
+      else await sql(txn);
       await txn.execAsync(`PRAGMA user_version = ${next}`);
     });
     version = next;

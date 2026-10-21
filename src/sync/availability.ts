@@ -1,6 +1,7 @@
 import { mapWithConcurrency } from '@/api/http';
 import { tmdbGet, type TmdbDiscoverMovie, type TmdbPage } from '@/api/tmdb';
 import { bulkInsert, setMeta } from '@/db/helpers';
+import { searchKey } from '@/lib/search';
 
 import type { StepContext, SyncStep } from './types';
 
@@ -124,11 +125,12 @@ export const availabilityStep: SyncStep = {
       await bulkInsert(
         txn,
         'movie',
-        ['tmdb_id', 'title', 'original_title', 'overview', 'release_date', 'year', 'original_language', 'poster_path', 'backdrop_path', 'popularity'],
+        ['tmdb_id', 'title', 'original_title', 'search_text', 'overview', 'release_date', 'year', 'original_language', 'poster_path', 'backdrop_path', 'popularity'],
         [...movies.values()].map((m) => [
           m.id,
           m.title || m.original_title,
           m.original_title,
+          searchKey(m.title || m.original_title, m.original_title),
           m.overview || null,
           m.release_date || null,
           m.release_date ? Number(m.release_date.slice(0, 4)) : null,

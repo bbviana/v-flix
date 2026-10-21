@@ -1,6 +1,7 @@
 import { HttpError, mapWithConcurrency } from '@/api/http';
 import { tmdbGet, type TmdbMovieDetails } from '@/api/tmdb';
 import { bulkInsert, setMeta } from '@/db/helpers';
+import { searchKey } from '@/lib/search';
 
 import type { SyncStep } from './types';
 
@@ -79,7 +80,7 @@ export const detailsStep: SyncStep = {
           }
           await txn.runAsync(
             `UPDATE movie SET
-               imdb_id = ?, title = ?, original_title = ?, overview = ?, release_date = ?, year = ?,
+               imdb_id = ?, title = ?, original_title = ?, search_text = ?, overview = ?, release_date = ?, year = ?,
                runtime = ?, original_language = ?, poster_path = ?, backdrop_path = ?, popularity = ?,
                certification_br = ?, director = ?, top_cast = ?, details_fetched_at = ?
              WHERE tmdb_id = ?`,
@@ -87,6 +88,7 @@ export const detailsStep: SyncStep = {
               d.imdb_id || d.external_ids?.imdb_id || null,
               d.title || d.original_title,
               d.original_title,
+              searchKey(d.title || d.original_title, d.original_title),
               d.overview || null,
               d.release_date || null,
               d.release_date ? Number(d.release_date.slice(0, 4)) : null,

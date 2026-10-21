@@ -20,8 +20,9 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: colors.background },
           }}
         >
-          <Stack.Screen name="index" options={{ title: 'v-flix' }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="sync" options={{ title: 'Sincronização' }} />
+          <Stack.Screen name="filters" options={{ title: 'Filtros', presentation: 'modal' }} />
         </Stack>
       </SQLiteProvider>
     </ThemeProvider>
