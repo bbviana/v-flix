@@ -1,46 +1,76 @@
 import { Link, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { getCatalogSummary } from '@/db/queries';
-import { colors, fontSize, radius, spacing } from '@/theme';
+import { PosterCard } from '@/components/poster-card';
+import { getPopular, type PosterItem } from '@/db/queries';
+import { colors, radius, spacing, type } from '@/theme';
 
 // Tela provisória: a Início com fileiras chega no passo 8.
 export default function HomeScreen() {
   const db = useSQLiteContext();
-  const [total, setTotal] = useState<number | null>(null);
+  const [popular, setPopular] = useState<PosterItem[] | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      getCatalogSummary(db).then((s) => setTotal(s.total));
+      getPopular(db).then(setPopular);
     }, [db]),
   );
 
+  if (popular === null) return <View style={styles.screen} />;
+
+  if (popular.length === 0) {
+    return (
+      <View style={[styles.screen, styles.empty]}>
+        <Text style={styles.emptyTitle}>Nenhum filme ainda</Text>
+        <Text style={styles.emptyText}>Sincronize para trazer os catálogos dos seus serviços.</Text>
+        <SyncButton />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>v-flix</Text>
-      <Text style={styles.muted}>
-        {total === null ? '…' : total === 0 ? 'Nenhum filme ainda.' : `${total.toLocaleString('pt-BR')} filmes no catálogo`}
-      </Text>
-      <Link href="/sync" asChild>
-        <Pressable style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}>
-          <Text style={styles.buttonText}>Sincronizar</Text>
-        </Pressable>
-      </Link>
+    <View style={styles.screen}>
+      <Text style={styles.rowTitle}>Populares</Text>
+      <FlatList
+        horizontal
+        data={popular}
+        keyExtractor={(m) => String(m.tmdb_id)}
+        renderItem={({ item }) => <PosterCard movie={item} width={120} />}
+        contentContainerStyle={styles.row}
+        showsHorizontalScrollIndicator={false}
+      />
+      <View style={styles.footer}>
+        <SyncButton />
+      </View>
     </View>
   );
 }
 
+function SyncButton() {
+  return (
+    <Link href="/sync" asChild>
+      <Pressable style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}>
+        <Text style={styles.buttonText}>Sincronizar</Text>
+      </Pressable>
+    </Link>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
-  title: { color: colors.primary, fontSize: fontSize.xxl, fontWeight: '800' },
-  muted: { color: colors.textMuted, fontSize: fontSize.sm },
+  screen: { flex: 1, backgroundColor: colors.background, paddingTop: spacing.lg },
+  empty: { alignItems: 'center', justifyContent: 'center', gap: spacing.md, paddingHorizontal: spacing.xxl },
+  emptyTitle: { ...type.title, color: colors.text },
+  emptyText: { ...type.callout, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.md },
+  rowTitle: { ...type.headline, color: colors.text, paddingHorizontal: spacing.xl, marginBottom: spacing.md },
+  row: { paddingHorizontal: spacing.xl, gap: spacing.sm },
+  footer: { alignItems: 'center', marginTop: spacing.xxl },
   button: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
+    backgroundColor: colors.accent,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xxl,
+    paddingHorizontal: spacing.xl,
   },
-  buttonText: { color: colors.text, fontSize: fontSize.md, fontWeight: '700' },
+  buttonText: { ...type.callout, fontWeight: '600', color: '#fff' },
 });

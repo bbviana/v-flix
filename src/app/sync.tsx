@@ -10,7 +10,7 @@ import { getMeta } from '@/db/helpers';
 import { getCatalogSummary, type CatalogSummary } from '@/db/queries';
 import { initialStepStates, runSync } from '@/sync/run-sync';
 import type { StepState } from '@/sync/types';
-import { colors, fontSize, radius, spacing } from '@/theme';
+import { colors, radius, spacing, type } from '@/theme';
 
 type Summary = CatalogSummary & { lastSyncAt?: string };
 
@@ -46,50 +46,70 @@ export default function SyncScreen() {
     }
   };
 
+  const lastSync = summary?.lastSyncAt ? new Date(summary.lastSyncAt).toLocaleString('pt-BR') : null;
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.muted}>
-        Última sincronização:{' '}
-        {summary?.lastSyncAt ? new Date(summary.lastSyncAt).toLocaleString('pt-BR') : 'nunca'}
-      </Text>
+      <View style={styles.intro}>
+        <Text style={styles.introText}>
+          {lastSync ? `Última sincronização em ${lastSync}.` : 'Nenhuma sincronização ainda.'}
+        </Text>
+        <Pressable
+          onPress={running ? () => abortRef.current?.abort() : start}
+          style={({ pressed }) => [styles.button, running && styles.buttonCancel, pressed && styles.pressed]}
+        >
+          <Text style={[styles.buttonText, running && { color: colors.text }]}>
+            {running ? 'Cancelar' : 'Sincronizar agora'}
+          </Text>
+        </Pressable>
+      </View>
 
-      <Pressable
-        onPress={running ? () => abortRef.current?.abort() : start}
-        style={({ pressed }) => [styles.button, running && styles.buttonCancel, pressed && styles.pressed]}
-      >
-        <Text style={styles.buttonText}>{running ? 'Cancelar' : 'Sincronizar'}</Text>
-      </Pressable>
-
-      <View style={styles.card}>
-        {steps.map((step) => (
-          <StepRow key={step.id} step={step} />
+      <View style={styles.group}>
+        {steps.map((step, i) => (
+          <StepRow key={step.id} step={step} last={i === steps.length - 1} />
         ))}
       </View>
 
       {summary && summary.total > 0 && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Catálogo</Text>
-          <Text style={styles.total}>
-            {summary.total.toLocaleString('pt-BR')} filmes únicos ·{' '}
-            {summary.withRating.toLocaleString('pt-BR')} com nota IMDb · {summary.oscarNominees} indicados ao
-            Oscar ({summary.oscarWinners} vencedores)
-          </Text>
-          {summary.providers.map((p) => (
-            <View key={p.id} style={styles.providerRow}>
-              <Image source={posterUrl(p.logo_path, 'w92')} style={styles.logo} />
-              <Text style={styles.providerName}>{p.name}</Text>
-              <Text style={styles.providerCount}>{p.count.toLocaleString('pt-BR')}</Text>
-            </View>
-          ))}
+        <View style={styles.catalog}>
+          <View>
+            <Text style={styles.bigNumber}>{summary.total.toLocaleString('pt-BR')}</Text>
+            <Text style={styles.bigLabel}>filmes no catálogo</Text>
+          </View>
+
+          <View style={styles.stats}>
+            <Stat value={summary.withRating.toLocaleString('pt-BR')} label="com nota IMDb" />
+            <Stat value={String(summary.oscarNominees)} label="indicados ao Oscar" />
+            <Stat value={String(summary.oscarWinners)} label="vencedores" />
+          </View>
+
+          <View style={styles.group}>
+            {summary.providers.map((p, i) => (
+              <View key={p.id} style={[styles.row, i < summary.providers.length - 1 && styles.rowDivider]}>
+                <Image source={posterUrl(p.logo_path, 'w92')} style={styles.logo} />
+                <Text style={styles.rowTitle}>{p.name}</Text>
+                <Text style={styles.rowValue}>{p.count.toLocaleString('pt-BR')}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       )}
     </ScrollView>
   );
 }
 
-function StepRow({ step }: { step: StepState }) {
+function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <View style={styles.step}>
+    <View style={styles.stat}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function StepRow({ step, last }: { step: StepState; last: boolean }) {
+  return (
+    <View style={[styles.step, !last && styles.rowDivider]}>
       <View style={styles.stepHeader}>
         <StatusIcon status={step.status} />
         <Text style={styles.stepTitle}>{step.title}</Text>
@@ -109,48 +129,56 @@ function StepRow({ step }: { step: StepState }) {
 function StatusIcon({ status }: { status: StepState['status'] }) {
   switch (status) {
     case 'running':
-      return <ActivityIndicator size="small" color={colors.primary} />;
+      return <ActivityIndicator size="small" color={colors.accent} />;
     case 'done':
       return <Ionicons name="checkmark-circle" size={20} color={colors.success} />;
     case 'skipped':
-      return <Ionicons name="play-skip-forward-circle" size={20} color={colors.textMuted} />;
+      return <Ionicons name="play-skip-forward-circle" size={20} color={colors.textTertiary} />;
     case 'error':
       return <Ionicons name="alert-circle" size={20} color={colors.danger} />;
     default:
-      return <Ionicons name="ellipse-outline" size={20} color={colors.textMuted} />;
+      return <Ionicons name="ellipse-outline" size={20} color={colors.textTertiary} />;
   }
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, gap: spacing.lg },
-  muted: { color: colors.textMuted, fontSize: fontSize.sm },
+  content: { padding: spacing.xl, gap: spacing.xxl },
+  intro: { gap: spacing.lg, alignItems: 'flex-start' },
+  introText: { ...type.callout, color: colors.textSecondary },
   button: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
+    backgroundColor: colors.accent,
+    borderRadius: radius.pill,
     paddingVertical: spacing.md,
-    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
   },
   buttonCancel: { backgroundColor: colors.surfaceAlt },
   pressed: { opacity: 0.7 },
-  buttonText: { color: colors.text, fontSize: fontSize.md, fontWeight: '700' },
-  card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, gap: spacing.lg },
-  cardTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '700' },
-  total: { color: colors.textMuted, fontSize: fontSize.md, marginTop: -spacing.sm },
-  step: { gap: spacing.xs },
-  stepHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  stepTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '600' },
-  stepMessage: { color: colors.textMuted, fontSize: fontSize.sm, marginLeft: 28 },
+  buttonText: { ...type.callout, fontWeight: '600', color: '#fff' },
+  group: { backgroundColor: colors.surface, borderRadius: radius.lg, paddingHorizontal: spacing.lg },
+  rowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator },
+  step: { paddingVertical: spacing.md, gap: spacing.xs },
+  stepHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  stepTitle: { ...type.callout, color: colors.text },
+  stepMessage: { ...type.footnote, color: colors.textSecondary, marginLeft: 32 },
   progressTrack: {
-    height: 4,
+    height: 3,
     backgroundColor: colors.surfaceAlt,
     borderRadius: 2,
-    marginLeft: 28,
+    marginLeft: 32,
+    marginTop: spacing.xs,
     overflow: 'hidden',
   },
-  progressFill: { height: '100%', backgroundColor: colors.primary },
-  providerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  logo: { width: 32, height: 32, borderRadius: radius.sm },
-  providerName: { color: colors.text, fontSize: fontSize.md, flex: 1 },
-  providerCount: { color: colors.text, fontSize: fontSize.md, fontWeight: '700' },
+  progressFill: { height: '100%', backgroundColor: colors.accent },
+  catalog: { gap: spacing.xl },
+  bigNumber: { ...type.largeTitle, fontSize: 44, lineHeight: 50, color: colors.text },
+  bigLabel: { ...type.callout, color: colors.textSecondary },
+  stats: { flexDirection: 'row', gap: spacing.xl },
+  stat: { flex: 1, gap: 2 },
+  statValue: { ...type.headline, color: colors.text },
+  statLabel: { ...type.footnote, color: colors.textSecondary },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
+  logo: { width: 28, height: 28, borderRadius: radius.sm },
+  rowTitle: { ...type.callout, color: colors.text, flex: 1 },
+  rowValue: { ...type.callout, color: colors.textSecondary },
 });
