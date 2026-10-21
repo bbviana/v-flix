@@ -18,6 +18,7 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="index" options={{ title: 'v-flix' }} />
+          <Stack.Screen name="sync" options={{ title: 'Sincronização' }} />
         </Stack>
       </SQLiteProvider>
     </ThemeProvider>
