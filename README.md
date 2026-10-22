@@ -98,6 +98,18 @@ npx expo-doctor             # diagnostica dependências e configuração
 - O token fica exposto no bundle (`EXPO_PUBLIC_*`). Isso é aceitável porque o app é só para uso pessoal e não vai para loja.
 - Para zerar os dados durante o desenvolvimento, limpe os dados do Expo Go ou apague o `vflix.db`.
 
+### Dump inicial
+
+Para a primeira instalação não começar do zero (~10 min de sync no celular), o app traz um banco pronto em `assets/db/vflix.db`. Ele é copiado só quando o banco ainda não existe; depois disso, o botão "Sincronizar" busca só o que mudou.
+
+```bash
+nvm use
+make dump         # atualiza o dump a partir do atual (~1 min)
+make dump-fresh   # gera do zero (~10 min)
+```
+
+O script (`scripts/dump.ts`) roda as mesmas etapas de `src/sync/` no Node, com um adaptador de `node:sqlite` para a API do expo-sqlite (`scripts/node-sqlite.ts`). O dump usa os 4 serviços padrão e sai sem dados do usuário (vistos, Minha lista, configurações). Regere antes de cada build do APK e depois de mudanças no esquema.
+
 ### Build do APK
 
 > Ainda não configurado. Será adicionado no passo 9 do plano (`eas.json` com o perfil `preview`).

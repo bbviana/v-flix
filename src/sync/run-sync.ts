@@ -1,24 +1,11 @@
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import { setMeta } from '@/db/helpers';
-import { getCatalogSummary } from '@/db/queries';
-
-import { availabilityStep } from './availability';
-import { detailsStep } from './details';
-import { createImdbRatingsStep } from './imdb-ratings';
 import { expoRatingsSource } from './imdb-source.expo';
-import { oscarStep } from './oscar';
-import { providersStep } from './providers';
+import { createSyncSteps, writeSyncSummary } from './steps';
 import type { StepState, SyncStep } from './types';
 
-export const SYNC_STEPS: SyncStep[] = [
-  providersStep,
-  availabilityStep,
-  detailsStep,
-  createImdbRatingsStep(expoRatingsSource),
-  oscarStep,
-];
+export const SYNC_STEPS: SyncStep[] = createSyncSteps(expoRatingsSource);
 
 const KEEP_AWAKE_TAG = 'vflix-sync';
 
@@ -64,14 +51,7 @@ export async function runSync(
         return false;
       }
     }
-    const summary = await getCatalogSummary(db);
-    await setMeta(db, {
-      last_sync_at: new Date().toISOString(),
-      summary_total: summary.total,
-      summary_with_rating: summary.withRating,
-      summary_oscar_nominees: summary.oscarNominees,
-      summary_oscar_winners: summary.oscarWinners,
-    });
+    await writeSyncSummary(db);
     return true;
   } finally {
     deactivateKeepAwake(KEEP_AWAKE_TAG);

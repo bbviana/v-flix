@@ -45,3 +45,6 @@ example
 
 # IDE
 .idea/
+
+# arquivo de trabalho do make dump
+assets/db/*.tmp*

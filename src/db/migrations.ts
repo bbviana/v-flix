@@ -113,6 +113,18 @@ const MIGRATIONS: Migration[] = [
   );
   UPDATE movie SET details_fetched_at = NULL;
   `,
+  // v8: movie_recommendation sem rowid (só a chave primária): ~5 MB a menos no banco e no dump.
+  `
+  CREATE TABLE movie_recommendation_new (
+    tmdb_id INTEGER NOT NULL,
+    recommended_id INTEGER NOT NULL,
+    rank INTEGER NOT NULL,
+    PRIMARY KEY (tmdb_id, recommended_id)
+  ) WITHOUT ROWID;
+  INSERT INTO movie_recommendation_new SELECT tmdb_id, recommended_id, rank FROM movie_recommendation;
+  DROP TABLE movie_recommendation;
+  ALTER TABLE movie_recommendation_new RENAME TO movie_recommendation;
+  `,
 ];
 
 export const DATABASE_NAME = 'vflix.db';
