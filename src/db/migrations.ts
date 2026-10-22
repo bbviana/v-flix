@@ -125,6 +125,17 @@ const MIGRATIONS: Migration[] = [
   DROP TABLE movie_recommendation;
   ALTER TABLE movie_recommendation_new RENAME TO movie_recommendation;
   `,
+  // v9: palavras-chave da TMDB (em inglês), base das tags de clima e temas. As tags em si
+  // são um mapa curado no código (src/lib/moods.ts), para poderem mudar sem rebuscar.
+  `
+  CREATE TABLE keyword (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
+  CREATE TABLE movie_keyword (
+    tmdb_id INTEGER NOT NULL,
+    keyword_id INTEGER NOT NULL,
+    PRIMARY KEY (tmdb_id, keyword_id)
+  ) WITHOUT ROWID;
+  UPDATE movie SET details_fetched_at = NULL;
+  `,
 ];
 
 export const DATABASE_NAME = 'vflix.db';

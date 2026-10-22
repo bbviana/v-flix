@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+import { MOODS } from '@/lib/moods';
 import { OSCAR_CATEGORIES } from '@/lib/oscar';
 
 export type ProviderCount = { id: number; name: string; logo_path: string | null; count: number };
@@ -58,12 +59,14 @@ export type MovieDetail = {
   votes: number | null;
   oscars: { category: string; year: number | null; won: number }[];
   genres: string[];
+  /** Tags de clima e temas (ids de MOODS), na ordem de MOODS. */
+  moods: string[];
   countries: { iso: string; name: string }[];
   providers: { id: number; name: string; logo_path: string | null }[];
 };
 
 export async function getMovieDetail(db: SQLiteDatabase, tmdbId: number): Promise<MovieDetail | null> {
-  const movie = await db.getFirstAsync<Omit<MovieDetail, 'cast' | 'genres' | 'countries' | 'providers' | 'oscars'> & { top_cast: string | null }>(
+  const movie = await db.getFirstAsync<Omit<MovieDetail, 'cast' | 'genres' | 'moods' | 'countries' | 'providers' | 'oscars'> & { top_cast: string | null }>(
     `SELECT m.tmdb_id, m.imdb_id, m.title, m.original_title, m.overview, m.year, m.runtime,
             m.poster_path, m.backdrop_path, m.certification_br, m.director, m.top_cast,
             m.budget, m.revenue,
@@ -75,7 +78,7 @@ export async function getMovieDetail(db: SQLiteDatabase, tmdbId: number): Promis
   );
   if (!movie) return null;
 
-  const [genres, countries, providers, oscars] = await Promise.all([
+  const [genres, countries, providers, oscars, keywords] = await Promise.all([
     db.getAllAsync<{ name: string }>(
       'SELECT g.name FROM movie_genre mg JOIN genre g ON g.id = mg.genre_id WHERE mg.tmdb_id = ? ORDER BY g.name',
       tmdbId,
@@ -96,13 +99,19 @@ export async function getMovieDetail(db: SQLiteDatabase, tmdbId: number): Promis
           movie.imdb_id,
         )
       : Promise.resolve([]),
+    db.getAllAsync<{ name: string }>(
+      'SELECT k.name FROM movie_keyword mk JOIN keyword k ON k.id = mk.keyword_id WHERE mk.tmdb_id = ?',
+      tmdbId,
+    ),
   ]);
+  const keywordNames = new Set(keywords.map((k) => k.name));
 
   const { top_cast, ...rest } = movie;
   return {
     ...rest,
     cast: top_cast ? (JSON.parse(top_cast) as string[]) : [],
     genres: genres.map((g) => g.name),
+    moods: MOODS.filter((m) => m.keywords.some((k) => keywordNames.has(k))).map((m) => m.id),
     countries,
     providers,
     // Ordem fixa das categorias (Melhor Filme primeiro).

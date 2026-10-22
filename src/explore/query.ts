@@ -2,6 +2,7 @@ import type { SQLiteBindValue, SQLiteDatabase } from 'expo-sqlite';
 
 import type { PosterItem } from '@/db/queries';
 import { visibleByCountry } from '@/db/settings';
+import { moodById } from '@/lib/moods';
 import { normalize } from '@/lib/search';
 
 import type { Filters } from './filters';
@@ -44,6 +45,16 @@ export function buildWhere(f: Filters, { includeHidden = false } = {}) {
       `EXISTS (SELECT 1 FROM movie_genre mg WHERE mg.tmdb_id = m.tmdb_id AND mg.genre_id IN (${placeholders(f.genres.length)}))`,
     );
     params.push(...f.genres);
+  }
+  // Tags: todas as marcadas (E entre tags); cada tag vale por qualquer uma das suas palavras-chave.
+  for (const id of f.moods) {
+    const keywords = moodById.get(id)?.keywords;
+    if (!keywords) continue;
+    where.push(
+      `EXISTS (SELECT 1 FROM movie_keyword mk JOIN keyword k ON k.id = mk.keyword_id
+               WHERE mk.tmdb_id = m.tmdb_id AND k.name IN (${placeholders(keywords.length)}))`,
+    );
+    params.push(...keywords);
   }
   if (f.countries.length) {
     // "Contém": basta um dos países de produção estar na seleção.

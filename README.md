@@ -1,6 +1,6 @@
 # v-flix
 
-App Android pessoal, estilo Netflix, que reúne num só lugar os **filmes** disponíveis por assinatura no **Brasil** em **Netflix, Prime Video, Disney+ e HBO Max** (padrão; outros 11 serviços, como Globoplay, MUBI e Apple TV, podem ser ligados nas Configurações). Cada filme vem com a **nota do IMDb** e o **Oscar** (Melhor Filme, Filme Internacional e Roteiro, indicado/vencedor), orçamento e bilheteria, e pode ser filtrado por gênero, país, serviço, nota, votos, ano e Oscar.
+App Android pessoal, estilo Netflix, que reúne num só lugar os **filmes** disponíveis por assinatura no **Brasil** em **Netflix, Prime Video, Disney+ e HBO Max** (padrão; outros 11 serviços, como Globoplay, MUBI e Apple TV, podem ser ligados nas Configurações). Cada filme vem com a **nota do IMDb** e o **Oscar** (Melhor Filme, Filme Internacional e Roteiro, indicado/vencedor), orçamento e bilheteria, e pode ser filtrado por gênero, clima e temas (Divertido, Viagem no tempo…), país, serviço, nota, votos, ano e Oscar.
 
 Não há backend: o próprio celular baixa os dados, cruza as fontes e guarda tudo num SQLite local. O plano completo está em [`plan.md`](plan.md).
 
@@ -59,7 +59,7 @@ Código que não é tela fica fora de `src/app/`.
 
 ### Banco de dados
 
-Tabelas principais: `movie`, `provider`, `genre`, `country`, as tabelas de ligação `movie_genre`, `movie_country`, `movie_provider` e `movie_recommendation`, além de `imdb_rating`, `oscar_award`, `watched`, `watchlist`, `app_setting` e `sync_meta` (data e contagens da última sync).
+Tabelas principais: `movie`, `provider`, `genre`, `country`, as tabelas de ligação `movie_genre`, `movie_country`, `movie_provider`, `movie_recommendation` e `movie_keyword` (+ `keyword`), além de `imdb_rating`, `oscar_award`, `watched`, `watchlist`, `app_setting` e `sync_meta` (data e contagens da última sync).
 
 Para mudar o esquema, **acrescente** uma nova entrada ao fim do array `MIGRATIONS` em `src/db/migrations.ts`. Nunca edite uma migração que já foi aplicada.
 

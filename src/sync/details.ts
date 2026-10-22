@@ -33,7 +33,7 @@ async function fetchDetails(id: number, signal: AbortSignal): Promise<Fetched> {
   try {
     const details = await tmdbGet<TmdbMovieDetails>(
       `/movie/${id}`,
-      { language: 'pt-BR', append_to_response: 'external_ids,credits,release_dates,recommendations' },
+      { language: 'pt-BR', append_to_response: 'external_ids,credits,release_dates,recommendations,keywords' },
       signal,
     );
     return { id, details };
@@ -72,10 +72,13 @@ export const detailsStep: SyncStep = {
         await txn.runAsync(`DELETE FROM movie_genre WHERE tmdb_id IN (${placeholders})`, ids);
         await txn.runAsync(`DELETE FROM movie_country WHERE tmdb_id IN (${placeholders})`, ids);
         await txn.runAsync(`DELETE FROM movie_recommendation WHERE tmdb_id IN (${placeholders})`, ids);
+        await txn.runAsync(`DELETE FROM movie_keyword WHERE tmdb_id IN (${placeholders})`, ids);
 
         const genres: [number, number][] = [];
         const countries: [number, string][] = [];
         const recommendations: [number, number, number][] = [];
+        const keywords = new Map<number, string>();
+        const movieKeywords: [number, number][] = [];
 
         for (const { id, details: d } of batch) {
           if (!d) {
@@ -114,10 +117,16 @@ export const detailsStep: SyncStep = {
           for (const g of d.genres) genres.push([id, g.id]);
           for (const c of d.production_countries) countries.push([id, c.iso_3166_1]);
           d.recommendations?.results.forEach((r, rank) => recommendations.push([id, r.id, rank]));
+          for (const k of d.keywords?.keywords ?? []) {
+            keywords.set(k.id, k.name);
+            movieKeywords.push([id, k.id]);
+          }
         }
 
         await bulkInsert(txn, 'movie_genre', ['tmdb_id', 'genre_id'], genres, { verb: 'INSERT OR IGNORE' });
         await bulkInsert(txn, 'movie_country', ['tmdb_id', 'iso'], countries, { verb: 'INSERT OR IGNORE' });
+        await bulkInsert(txn, 'keyword', ['id', 'name'], [...keywords], { verb: 'INSERT OR REPLACE' });
+        await bulkInsert(txn, 'movie_keyword', ['tmdb_id', 'keyword_id'], movieKeywords, { verb: 'INSERT OR IGNORE' });
         await bulkInsert(txn, 'movie_recommendation', ['tmdb_id', 'recommended_id', 'rank'], recommendations, {
           verb: 'INSERT OR IGNORE',
         });

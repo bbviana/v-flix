@@ -176,7 +176,7 @@ Ordem combinada depois do passo 8 (os números de feature referem-se a "Features
 8. Feature 7: **filmes para locação** (aumenta o catálogo; regerar o dump depois).
 9. Passo 9: **build do APK** (`eas.json`).
 
-Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 ✅ (**ocultar países**), feature 14 (**clima e temas**) e feature 15 ✅ (**sync que continua ao sair da tela**).
+Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 ✅ (**ocultar países**), feature 14 ✅ (**clima e temas**) e feature 15 ✅ (**sync que continua ao sair da tela**).
 
 ## Verificações
 
@@ -262,7 +262,7 @@ Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 
     - Vale para todo o app: fileiras da Início, Explorar (resultados e contagens) e opções de filtro. No Explorar, uma nota discreta ("1.046 filmes ocultos pelas configurações") evita confusão.
     - Implementação: guardar em `app_setting` e aplicar em `buildWhere` como uma condição a mais: o filme aparece se tiver algum país fora da lista, ou se não tiver país e "Sem país" não estiver marcado.
 
-14. **Clima e temas (tags curadas a partir das palavras-chave da TMDB).**
+14. ✅ **Clima e temas (tags curadas a partir das palavras-chave da TMDB).**
     - A TMDB tem palavras-chave por filme (`keywords`), mais específicas que gênero, incluindo palavras de clima (*audacious*, *bold*, *hopeful*, *inspirational*, *hilarious*, *mysterious*…) e temas (*time travel*, *based on true story*, *hero's journey*…).
     - Poréns, medidos em out/2026: **só em inglês**; cobertura desigual (filmes com 10 mil+ votos têm em média 10,5 e só 3% ficam sem nenhuma; no catálogo inteiro a média é 5 e 28% ficam sem nenhuma); termos livres, com repetições e ruído ("aftercreditsstinger").
     - Solução: uma **lista curada de ~30–50 tags em português**, cada uma agrupando várias palavras-chave em inglês. Ex.: Heroico (bravery, hero's journey, superhero, tragic hero), Emocionante (audacious, bold, frantic, race against time), Inspirador (inspirational, hopeful), Divertido (hilarious, amused, slapstick comedy), Sombrio (dark comedy, neo-noir, dark fantasy), Baseado em fatos reais (based on true story, biography), Baseado em livro (based on novel or book), Viagem no tempo (time travel, time warp).

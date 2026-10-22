@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Chip, ChipGroup, Segmented } from '@/components/chip';
 import { activeFilterCount, useFilters, useFilterValues, type OscarFilter, type SortBy, type WatchedFilter } from '@/explore/filters';
 import { exploreCount, getFilterOptions, type FilterOptions } from '@/explore/query';
+import { MOODS } from '@/lib/moods';
 import { OSCAR_CATEGORIES } from '@/lib/oscar';
 import { colors, radius, spacing, type } from '@/theme';
 
@@ -156,6 +157,20 @@ export default function FiltersScreen() {
                 ))}
               </ChipGroup>
             </Section>
+
+            {(['clima', 'tema'] as const).map((group) => (
+              <Section
+                key={group}
+                title={group === 'clima' ? 'Clima' : 'Temas'}
+                hint={group === 'clima' ? 'Marcados juntos se somam: Divertido + Natal mostra filmes com os dois.' : undefined}
+              >
+                <ChipGroup>
+                  {MOODS.filter((m) => m.group === group).map((m) => (
+                    <Chip key={m.id} label={m.label} selected={f.moods.includes(m.id)} onPress={() => toggle('moods', m.id)} />
+                  ))}
+                </ChipGroup>
+              </Section>
+            ))}
 
             <Section title="País de produção">
               <ChipGroup>

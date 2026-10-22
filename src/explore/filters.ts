@@ -12,6 +12,8 @@ export type Filters = {
   query: string;
   providers: number[];
   genres: number[];
+  /** Tags de clima e temas (ids de MOODS); o filme precisa ter todas as marcadas. */
+  moods: string[];
   countries: string[];
   minRating: number | null;
   minVotes: number;
@@ -29,6 +31,7 @@ export const DEFAULT_FILTERS: Filters = {
   query: '',
   providers: [],
   genres: [],
+  moods: [],
   countries: [],
   minRating: null,
   minVotes: 1000, // esconde filmes obscuros com poucas notas
@@ -42,7 +45,7 @@ export const DEFAULT_FILTERS: Filters = {
 
 type FiltersStore = Filters & {
   set: (patch: Partial<Filters>) => void;
-  toggle: <K extends 'providers' | 'genres' | 'countries' | 'decades' | 'oscarCategories'>(key: K, value: Filters[K][number]) => void;
+  toggle: <K extends 'providers' | 'genres' | 'moods' | 'countries' | 'decades' | 'oscarCategories'>(key: K, value: Filters[K][number]) => void;
   /** Limpa os filtros do painel, preservando busca e ordenação. */
   reset: () => void;
 };
@@ -64,6 +67,7 @@ export function activeFilterCount(f: Filters) {
   return (
     (f.providers.length ? 1 : 0) +
     (f.genres.length ? 1 : 0) +
+    (f.moods.length ? 1 : 0) +
     (f.countries.length ? 1 : 0) +
     (f.decades.length ? 1 : 0) +
     (f.minRating !== null ? 1 : 0) +
@@ -81,6 +85,7 @@ export function useFilterValues(): Filters {
       query: s.query,
       providers: s.providers,
       genres: s.genres,
+      moods: s.moods,
       countries: s.countries,
       minRating: s.minRating,
       minVotes: s.minVotes,

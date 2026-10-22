@@ -9,11 +9,14 @@ import { FlatList, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { posterUrl } from '@/api/tmdb';
+import { Chip, ChipGroup } from '@/components/chip';
 import { PosterCard } from '@/components/poster-card';
 import { getMovieDetail, type MovieDetail, type PosterItem } from '@/db/queries';
 import { getUserState, setInList, setWatched, type UserState } from '@/db/user-lists';
+import { DEFAULT_FILTERS, useFilters } from '@/explore/filters';
 import { getRecommendations } from '@/explore/query';
 import { flagEmoji, formatMoney, formatRating, formatRuntime, formatVotes } from '@/lib/format';
+import { moodById } from '@/lib/moods';
 import { oscarLabel } from '@/lib/oscar';
 import { colors, radius, spacing, type } from '@/theme';
 
@@ -156,6 +159,24 @@ function Recommendations({ tmdbId }: { tmdbId: number }) {
   );
 }
 
+/** Tags de clima e temas; tocar abre o Explorar filtrado pela tag. */
+function Moods({ moods }: { moods: string[] }) {
+  const open = (id: string) => {
+    useFilters.getState().set({ ...DEFAULT_FILTERS, moods: [id] });
+    router.navigate('/explore');
+  };
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionLabel}>Clima e temas</Text>
+      <ChipGroup>
+        {moods.map((id) => (
+          <Chip key={id} label={moodById.get(id)?.label ?? id} selected={false} onPress={() => open(id)} />
+        ))}
+      </ChipGroup>
+    </View>
+  );
+}
+
 /** Resumo no destaque; com várias indicações, o detalhe fica na seção "Oscar". */
 function OscarHighlight({ oscars }: { oscars: MovieDetail['oscars'] }) {
   const wins = oscars.filter((o) => o.won).length;
@@ -265,6 +286,8 @@ function MovieBody({ movie }: { movie: MovieDetail }) {
       )}
 
       {movie.overview && <Text style={styles.overview}>{movie.overview}</Text>}
+
+      {movie.moods.length > 0 && <Moods moods={movie.moods} />}
 
       {facts.length > 0 && (
         <View style={styles.facts}>
