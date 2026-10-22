@@ -177,13 +177,14 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
    - Botão no Detalhe para marcar e desmarcar. Os dados ficam numa tabela local (`watched (tmdb_id PRIMARY KEY, watched_at TEXT)`), que a sincronização nunca apaga.
    - Filtro no Explorar: todos / não vistos / vistos. Avaliar se as fileiras da Início devem esconder os já vistos.
    - Se o dump inicial (passo 10) substituir o banco numa reinstalação, a tabela `watched` precisa ser preservada.
-2. **Oscar de Melhor Roteiro (Original e Adaptado).**
-   - **Verificar a viabilidade.** Os itens no Wikidata são `Q41417` (Original) e `Q107258` (Adaptado).
-   - Risco: esses prêmios costumam ser atribuídos aos **roteiristas** (pessoas), não ao filme. A consulta que usamos para Melhor Filme (prêmio ligado ao filme via P166/P1411) pode trazer pouca coisa. Checar a cobertura comparando com a lista real de vencedores, e investigar o qualificador "for work" (P1686) nas declarações dos roteiristas como alternativa.
-   - Se for viável, generalizar `oscar_best_picture` para uma tabela de prêmios com categoria.
+2. **Mais categorias do Oscar.** Generalizar `oscar_best_picture` para uma tabela de prêmios com categoria (`oscar_award (imdb_id, category, year, won)`) e permitir filtrar e exibir cada categoria.
+   - **Melhor Filme Internacional** (antes "em Língua Estrangeira"), `Q105304`. **Viável, já verificado** com a mesma consulta usada para Melhor Filme: 342 filmes, 71 vencedores, todos os anos de 1957 a 2026 cobertos (22 no catálogo atual, como Roma, Parasita e Zona de Interesse). O prêmio é oficialmente do país, mas no Wikidata está ligado ao filme.
+   - **Melhor Roteiro Original** (`Q41417`) **e Adaptado** (`Q107258`). **Viabilidade a verificar.** Risco: esses prêmios costumam ser atribuídos aos **roteiristas** (pessoas), não ao filme, então a consulta via P166/P1411 no filme pode trazer pouca coisa. Checar a cobertura comparando com a lista real de vencedores, e investigar o qualificador "for work" (P1686) nas declarações dos roteiristas como alternativa.
+   - Uma única consulta SPARQL pode trazer todas as categorias (`VALUES ?premio { wd:Q102427 wd:Q105304 ... }`).
 3. **Ícone do Oscar nos pôsteres.**
    - Vencedores: ícone de troféu **preenchido** sobre o pôster (em grades e fileiras).
    - Indicados não vencedores: o mesmo ícone, **só o contorno**.
+   - Com várias categorias, o ícone reflete a melhor situação do filme (venceu alguma > indicado a alguma); o detalhe por categoria fica na tela do filme.
    - Discreto, num canto do pôster, seguindo a diretriz visual clean.
 
 ## Fora do escopo (por enquanto)
