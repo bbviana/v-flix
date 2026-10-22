@@ -186,6 +186,10 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
    - Indicados não vencedores: o mesmo ícone, **só o contorno**.
    - Com várias categorias, o ícone reflete a melhor situação do filme (venceu alguma > indicado a alguma); o detalhe por categoria fica na tela do filme.
    - Discreto, num canto do pôster, seguindo a diretriz visual clean.
+4. **Nota IMDb no card do filme.**
+   - Mostrar a nota (ex.: "8,5") nos pôsteres das grades e fileiras. Filmes sem nota não mostram nada.
+   - Desenhar junto com o ícone do Oscar (item 3), para os dois não competirem: por exemplo, a nota num canto inferior e o troféu no superior, em selos pequenos e semitransparentes que não cubram o pôster.
+   - A consulta do Explorar já traz `rating`; falta incluir nas fileiras da Início e no `PosterCard`.
 
 ## Fora do escopo (por enquanto)
 
