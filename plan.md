@@ -281,7 +281,7 @@ A v1 termina com a feature 16. O que sobra é **v1.x**:
     - Indicador discreto do progresso fora da tela (ex.: na linha "Sincronização" das Configurações); cancelar continua sendo um botão explícito.
     - Continua exigindo o app aberto e a tela ligada (keep-awake); sync em segundo plano segue fora do escopo.
 
-16. ✅ **Adicionar à Minha lista com toque longo no pôster.** Feito: vibração (`performAndroidHapticsAsync`) e toast nativo do Android; pôster na lista ganha um selo de marcador no canto inferior direito. Junto, o selo de visto ficou mais visível (círculo verde sólido, maior) e tem prioridade sobre o de lista.
+16. ✅ **Adicionar à Minha lista com toque longo no pôster.** Feito: vibração (`performAndroidHapticsAsync`) e toast nativo do Android; pôster na lista ganha um selo de marcador no canto inferior direito. Junto, o selo de visto ficou mais visível (círculo verde sólido, maior) e tem prioridade sobre o de lista. Depois, **toque duplo** no pôster marca/desmarca como visto (o toque simples espera 250 ms para abrir o Detalhe).
     - Em qualquer pôster (fileiras da Início, Explorar, recomendações do Detalhe), um toque longo põe ou tira o filme da Minha lista, sem abrir o Detalhe.
     - Feedback discreto: vibração leve (`expo-haptics`, incluído no Expo Go) e um aviso curto ("Adicionado à Minha lista" / "Removido da Minha lista"). Se marcar, o pôster pode ganhar um indicador, como o ✓ de visto.
     - Reaproveita `setInList` de `src/db/user-lists.ts`; a fileira "Minha lista" da Início recarrega ao voltar.

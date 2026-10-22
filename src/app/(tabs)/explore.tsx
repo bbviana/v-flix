@@ -48,13 +48,23 @@ export default function ExploreScreen() {
   // Incrementado a cada nova consulta para descartar respostas atrasadas.
   const generation = useRef(0);
   const [refreshKey, setRefreshKey] = useState(0);
+  const loadedCount = useRef(0);
+  useEffect(() => {
+    loadedCount.current = items.length;
+  }, [items.length]);
+  const lastFilters = useRef(filters);
 
   // Recarrega ao voltar para a aba (ex.: depois de uma sincronização).
   useFocusEffect(useCallback(() => setRefreshKey((k) => k + 1), []));
 
   useEffect(() => {
     const gen = ++generation.current;
-    Promise.all([exploreMovies(db, filters, PAGE, 0), exploreCount(db, filters)])
+    // Filtros novos começam da primeira página. Ao voltar do Detalhe, recarrega tudo o que já
+    // estava carregado: com só a primeira página, a lista encolheria e a rolagem perderia o lugar.
+    const sameFilters = lastFilters.current === filters;
+    lastFilters.current = filters;
+    const limit = sameFilters ? Math.max(PAGE, loadedCount.current) : PAGE;
+    Promise.all([exploreMovies(db, filters, limit, 0), exploreCount(db, filters)])
       .then(async ([rows, count]) => [rows, count, await exploreHiddenCount(db, filters, count)] as const)
       .then(([rows, count, hiddenCount]) => {
         if (gen !== generation.current) return;
