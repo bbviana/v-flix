@@ -258,9 +258,9 @@ Sem posição definida: feature 12 (**séries**, com a Crunchyroll) e feature 13
 13. **Ocultar filmes de países escolhidos.**
     - Motivação: muitos filmes indianos geram ruído. Nova seção nas Configurações, "Países ocultos", com a lista de países do catálogo (mais frequentes primeiro) para marcar.
     - **Regra: ocultar só se todos os países de produção do filme estiverem na lista.** Medido em out/2026: 1.114 filmes têm a Índia, 1.046 são só indianos. Os outros 68 são coproduções como *1917*, *Pixels* e *The Post*, em que a Índia aparece por participação de empresas indianas; com a regra "algum país", eles sumiriam indevidamente.
-    - 744 filmes do catálogo não têm país cadastrado e passariam pelo filtro. Avaliar complementar com o **idioma original** (ex.: ocultar também filmes em hindi, tâmil, telugo, malaiala e canarês quando a Índia estiver oculta) ou oferecer "idiomas ocultos" junto.
+    - **Opção "Sem país"** na mesma lista: marcada, oculta também os filmes sem país de produção cadastrado (744 no catálogo em out/2026).
     - Vale para todo o app: fileiras da Início, Explorar (resultados e contagens) e opções de filtro. No Explorar, uma nota discreta ("1.046 filmes ocultos pelas configurações") evita confusão.
-    - Implementação: guardar em `app_setting` e aplicar em `buildWhere` como uma condição a mais (`EXISTS` de algum país fora da lista, ou filme sem país).
+    - Implementação: guardar em `app_setting` e aplicar em `buildWhere` como uma condição a mais: o filme aparece se tiver algum país fora da lista, ou se não tiver país e "Sem país" não estiver marcado.
 
 ## Fora do escopo (por enquanto)
 
