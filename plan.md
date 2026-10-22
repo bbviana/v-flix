@@ -159,7 +159,7 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
 6. ✅ Tela de Detalhe.
 7. ✅ Tela Explorar com filtros.
 8. ✅ Tela Início com fileiras.
-9. `eas.json` com perfil `preview` gerando APK (`"android": { "buildType": "apk" }`) e instruções de build (`npx eas build -p android --profile preview`). **Adiado para o fim** (ver "Próximos passos").
+9. ✅ `eas.json` com perfil `preview` gerando APK (`"android": { "buildType": "apk" }`), versão controlada pelo EAS (`appVersionSource: remote` + `autoIncrement`) e o token da TMDB no ambiente `preview` do EAS. Instruções no README.
 10. ✅ **Dump inicial embutido no app:** um `Makefile` (ou Docker) roda a sincronização completa no computador, reaproveitando o código de `src/sync/` em Node com `node:sqlite` e um adaptador para a API do expo-sqlite. O resultado é um `.db` (compactado, se compensar) embutido como asset. Na primeira instalação, o app parte desse banco via `SQLiteProvider` `assetSource`, e o botão "Sincronizar" só busca o que mudou.
 
 ## Próximos passos
@@ -174,7 +174,7 @@ Ordem combinada depois do passo 8 (os números de feature referem-se a "Features
 6. ✅ Passo 10: **dump inicial embutido** (depois das mudanças de esquema acima, para não refazer o dump várias vezes).
 7. ✅ Feature 6: **ícone do app**.
 8. Feature 7: **filmes para locação** (aumenta o catálogo; regerar o dump depois).
-9. Passo 9: **build do APK** (`eas.json`).
+9. ✅ Passo 9: **build do APK** (`eas.json`; falta rodar `eas init` e o primeiro build).
 
 Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 ✅ (**ocultar países**), feature 14 ✅ (**clima e temas**), feature 15 ✅ (**sync que continua ao sair da tela**) e feature 16 (**Minha lista com toque longo**).
 

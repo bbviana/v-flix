@@ -116,11 +116,26 @@ Os ícones em `assets/images/` são gerados por `scripts/icons.py` (requer Pillo
 
 ### Build do APK
 
-> Ainda não configurado. Será adicionado no passo 9 do plano (`eas.json` com o perfil `preview`).
+O APK é gerado na nuvem pelo EAS (perfil `preview` do `eas.json`). O número da versão (`versionCode`) fica no EAS e sobe sozinho a cada build, então um APK novo instala por cima do anterior sem perder os dados.
+
+Configuração (uma vez):
 
 ```bash
-npx eas-cli@latest build -p android --profile preview
+npx eas-cli@latest login
+npx eas-cli@latest init     # cria o projeto no expo.dev e grava o projectId no app.json (commitar)
+# O .env não vai para o build: o token precisa estar no ambiente "preview" do EAS
+npx eas-cli@latest env:set --name EXPO_PUBLIC_TMDB_TOKEN --value "<token>" --environment preview --visibility sensitive
 ```
+
+A cada versão:
+
+```bash
+make dump                                              # dump atualizado no APK
+git commit -am "Atualiza dump"
+npx eas-cli@latest build -p android --profile preview  # o link do APK aparece no fim e no expo.dev
+```
+
+O EAS envia os arquivos do projeto respeitando o `.gitignore`: `.env` e `node_modules` ficam de fora, o dump em `assets/db/` vai junto.
 
 ## Créditos
 
