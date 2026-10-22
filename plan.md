@@ -151,16 +151,30 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
 
 ## Ordem de implementação
 
-1. Projeto Expo + TypeScript + expo-router, `.env` com o token, cliente HTTP da TMDB com retry/backoff, esquema SQLite com migração.
-2. Tela de sincronização com as etapas 1 e 2 (provedores + discover). **Checkpoint:** mostrar quantos filmes há por serviço e no total.
-3. Etapa 3 (detalhes incrementais).
-4. Etapa 4 (notas IMDb).
-5. Etapa 5 (Oscar via Wikidata).
-6. Tela de Detalhe.
-7. Tela Explorar com filtros.
-8. Tela Início com fileiras.
-9. `eas.json` com perfil `preview` gerando APK (`"android": { "buildType": "apk" }`) e instruções de build (`npx eas build -p android --profile preview`).
+1. ✅ Projeto Expo + TypeScript + expo-router, `.env` com o token, cliente HTTP da TMDB com retry/backoff, esquema SQLite com migração.
+2. ✅ Tela de sincronização com as etapas 1 e 2 (provedores + discover). **Checkpoint:** mostrar quantos filmes há por serviço e no total.
+3. ✅ Etapa 3 (detalhes incrementais).
+4. ✅ Etapa 4 (notas IMDb).
+5. ✅ Etapa 5 (Oscar via Wikidata).
+6. ✅ Tela de Detalhe.
+7. ✅ Tela Explorar com filtros.
+8. ✅ Tela Início com fileiras.
+9. `eas.json` com perfil `preview` gerando APK (`"android": { "buildType": "apk" }`) e instruções de build (`npx eas build -p android --profile preview`). **Adiado para o fim** (ver "Próximos passos").
 10. **Dump inicial embutido no app:** um `Makefile` (ou Docker) roda a sincronização completa no computador, reaproveitando o código de `src/sync/` em Node com `node:sqlite` e um adaptador para a API do expo-sqlite. O resultado é um `.db` (compactado, se compensar) embutido como asset. Na primeira instalação, o app parte desse banco via `SQLiteProvider` `assetSource`, e o botão "Sincronizar" só busca o que mudou.
+
+## Próximos passos
+
+Ordem combinada depois do passo 8 (os números de feature referem-se a "Features futuras"):
+
+1. Features 1 e 8 juntas: **marcar como visto** e **Minha lista** (mesmas tabelas do usuário, botões no Detalhe e filtros no Explorar).
+2. Feature 2: **mais categorias do Oscar** (Filme Internacional; verificar Roteiro).
+3. Feature 9: **orçamento e bilheteria**.
+4. Feature 10: **recomendações**.
+5. Feature 11: **escolher os serviços de streaming**.
+6. Passo 10: **dump inicial embutido** (depois das mudanças de esquema acima, para não refazer o dump várias vezes).
+7. Feature 6: **ícone do app**.
+8. Feature 7: **filmes para locação** (aumenta o catálogo; regerar o dump depois).
+9. Passo 9: **build do APK** (`eas.json`).
 
 ## Verificações
 
@@ -224,6 +238,13 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
     - Acrescentar `recommendations` ao `append_to_response` dos detalhes (mesma chamada, payload maior). Guardar a relação numa tabela `movie_recommendation (tmdb_id, recommended_id, rank)`.
     - No Detalhe, uma fileira com as recomendações **que estão no catálogo** (as de fora não são assistíveis).
     - Combina com a "Minha lista" (item 8): adicionar direto da fileira.
+
+11. **Escolher os serviços de streaming.**
+    - Hoje o app acompanha 4 serviços fixos (Netflix, Prime Video, Disney+, HBO Max). Permitir escolher quais usar, numa seção das Configurações.
+    - Opções: os serviços de assinatura disponíveis no BR segundo a TMDB (ex.: Apple TV+, Paramount+, Globoplay, MUBI, Crunchyroll, Looke, Claro video…), com os 4 atuais marcados por padrão.
+    - A etapa 1 da sincronização deixa de exigir os 4 nomes fixos: grava todos os provedores de assinatura do BR (nome e logo) e a etapa 2 busca só os escolhidos. Os nomes comerciais (Prime Video, Disney+) continuam vindo de um mapa de apelidos.
+    - Desmarcar um serviço remove os filmes dele na próxima sincronização (ou imediatamente, filtrando as consultas pelos serviços escolhidos).
+    - Mais serviços aumentam o catálogo: todos os serviços de assinatura do BR somam ~20 mil filmes, contra ~13 mil hoje.
 
 ## Fora do escopo (por enquanto)
 
