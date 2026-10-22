@@ -12,6 +12,7 @@ import { posterUrl } from '@/api/tmdb';
 import { getMovieDetail, type MovieDetail } from '@/db/queries';
 import { getUserState, setInList, setWatched, type UserState } from '@/db/user-lists';
 import { flagEmoji, formatRating, formatRuntime, formatVotes } from '@/lib/format';
+import { oscarLabel } from '@/lib/oscar';
 import { colors, radius, spacing, type } from '@/theme';
 
 export default function MovieScreen() {
@@ -123,6 +124,31 @@ function ActionButton({ icon, label, active, onPress }: ActionButtonProps) {
   );
 }
 
+/** Resumo no destaque; com várias indicações, o detalhe fica na seção "Oscar". */
+function OscarHighlight({ oscars }: { oscars: MovieDetail['oscars'] }) {
+  const wins = oscars.filter((o) => o.won).length;
+  const year = oscars.map((o) => o.year).find((y) => y !== null);
+  const value = wins > 1 ? `${wins} Oscars` : wins === 1 ? 'Vencedor' : 'Indicado';
+  const label =
+    oscars.length === 1
+      ? `Oscar de ${oscarLabel(oscars[0].category)}`
+      : wins === 1
+        ? `Oscar de ${oscarLabel(oscars.find((o) => o.won)!.category)}`
+        : wins > 1
+          ? `de ${oscars.length} indicações`
+          : `${oscars.length} indicações ao Oscar`;
+
+  return (
+    <View style={styles.highlight}>
+      <Text style={[styles.highlightValue, { color: colors.oscar }]}>{value}</Text>
+      <Text style={styles.highlightLabel}>
+        {label}
+        {year ? ` · ${year}` : ''}
+      </Text>
+    </View>
+  );
+}
+
 function MovieBody({ movie }: { movie: MovieDetail }) {
   const meta = [movie.year, formatRuntime(movie.runtime)].filter(Boolean).join(' · ');
   const showOriginal = movie.original_title && movie.original_title !== movie.title;
@@ -150,7 +176,7 @@ function MovieBody({ movie }: { movie: MovieDetail }) {
 
       <UserActions tmdbId={movie.tmdb_id} />
 
-      {(movie.rating !== null || movie.oscar_won !== null) && (
+      {(movie.rating !== null || movie.oscars.length > 0) && (
         <View style={styles.highlights}>
           {movie.rating !== null && (
             <View style={styles.highlight}>
@@ -163,16 +189,22 @@ function MovieBody({ movie }: { movie: MovieDetail }) {
               </Text>
             </View>
           )}
-          {movie.oscar_won !== null && (
-            <View style={styles.highlight}>
-              <Text style={[styles.highlightValue, { color: colors.oscar }]}>
-                {movie.oscar_won ? 'Vencedor' : 'Indicado'}
-              </Text>
-              <Text style={styles.highlightLabel}>
-                Oscar de Melhor Filme{movie.oscar_year ? ` · ${movie.oscar_year}` : ''}
-              </Text>
-            </View>
-          )}
+          {movie.oscars.length > 0 && <OscarHighlight oscars={movie.oscars} />}
+        </View>
+      )}
+
+      {movie.oscars.length > 1 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Oscar</Text>
+          <View>
+            {movie.oscars.map((o) => (
+              <View key={o.category} style={styles.oscarRow}>
+                <Ionicons name={o.won ? 'trophy' : 'trophy-outline'} size={15} color={colors.oscar} />
+                <Text style={styles.oscarCategory}>{oscarLabel(o.category)}</Text>
+                <Text style={styles.oscarStatus}>{o.won ? 'Vencedor' : 'Indicado'}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       )}
 
@@ -260,6 +292,14 @@ const styles = StyleSheet.create({
   highlightScale: { ...type.subhead, color: colors.textTertiary },
   highlightLabel: { ...type.footnote, color: colors.textSecondary },
   section: { gap: spacing.md },
+  oscarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  oscarCategory: { ...type.subhead, color: colors.text, flex: 1 },
+  oscarStatus: { ...type.subhead, color: colors.textSecondary },
   sectionLabel: { ...type.footnote, color: colors.textTertiary, textTransform: 'uppercase', letterSpacing: 0.6 },
   providers: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg },
   provider: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

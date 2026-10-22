@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Chip, ChipGroup, Segmented } from '@/components/chip';
 import { activeFilterCount, useFilters, useFilterValues, type OscarFilter, type SortBy, type WatchedFilter } from '@/explore/filters';
 import { exploreCount, getFilterOptions, type FilterOptions } from '@/explore/query';
+import { OSCAR_CATEGORIES } from '@/lib/oscar';
 import { colors, radius, spacing, type } from '@/theme';
 
 const SORT_OPTIONS: { value: SortBy; label: string }[] = [
@@ -106,8 +107,20 @@ export default function FiltersScreen() {
           </Section>
         )}
 
-        <Section title="Oscar de Melhor Filme">
+        <Section title="Oscar">
           <Segmented options={OSCAR_OPTIONS} value={f.oscar} onChange={(oscar) => set({ oscar })} />
+          {f.oscar !== 'all' && (
+            <ChipGroup>
+              {OSCAR_CATEGORIES.map((c) => (
+                <Chip
+                  key={c.id}
+                  label={c.short}
+                  selected={f.oscarCategories.includes(c.id)}
+                  onPress={() => toggle('oscarCategories', c.id)}
+                />
+              ))}
+            </ChipGroup>
+          )}
         </Section>
 
         <Section title="Nota IMDb mínima">

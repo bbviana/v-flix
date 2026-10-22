@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 
+import type { OscarCategory } from '@/lib/oscar';
+
 export type OscarFilter = 'all' | 'nominated' | 'won';
 /** 'added' = data de entrada na Minha lista (usado pela fileira da Início). */
 export type SortBy = 'rating' | 'popularity' | 'year' | 'added';
@@ -15,6 +17,8 @@ export type Filters = {
   minVotes: number;
   decades: number[]; // 1990 = 1990–1999
   oscar: OscarFilter;
+  /** Categorias consideradas pelo filtro de Oscar; vazio = qualquer uma. */
+  oscarCategories: OscarCategory[];
   watched: WatchedFilter;
   /** Só filmes da Minha lista (inclui os que saíram do catálogo). */
   inList: boolean;
@@ -30,6 +34,7 @@ export const DEFAULT_FILTERS: Filters = {
   minVotes: 1000, // esconde filmes obscuros com poucas notas
   decades: [],
   oscar: 'all',
+  oscarCategories: [],
   watched: 'all',
   inList: false,
   sort: 'popularity',
@@ -37,7 +42,7 @@ export const DEFAULT_FILTERS: Filters = {
 
 type FiltersStore = Filters & {
   set: (patch: Partial<Filters>) => void;
-  toggle: <K extends 'providers' | 'genres' | 'countries' | 'decades'>(key: K, value: Filters[K][number]) => void;
+  toggle: <K extends 'providers' | 'genres' | 'countries' | 'decades' | 'oscarCategories'>(key: K, value: Filters[K][number]) => void;
   /** Limpa os filtros do painel, preservando busca e ordenação. */
   reset: () => void;
 };
@@ -81,6 +86,7 @@ export function useFilterValues(): Filters {
       minVotes: s.minVotes,
       decades: s.decades,
       oscar: s.oscar,
+      oscarCategories: s.oscarCategories,
       watched: s.watched,
       inList: s.inList,
       sort: s.sort,

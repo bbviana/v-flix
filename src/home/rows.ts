@@ -28,8 +28,9 @@ export async function loadHomeRows(db: SQLiteDatabase): Promise<HomeRow[]> {
 
   const defs: Omit<HomeRow, 'movies'>[] = [
     { key: 'watchlist', title: 'Minha lista', filters: { ...DEFAULT_FILTERS, inList: true, minVotes: 0, sort: 'added' } },
-    { key: 'oscar-won', title: 'Vencedores do Oscar de Melhor Filme', filters: { ...base, oscar: 'won', minVotes: 0, sort: 'year' } },
-    { key: 'oscar-nominated', title: 'Indicados ao Oscar', filters: { ...base, oscar: 'nominated', minVotes: 0, sort: 'rating' } },
+    { key: 'oscar-won', title: 'Vencedores do Oscar de Melhor Filme', filters: { ...base, oscar: 'won', oscarCategories: ['picture'], minVotes: 0, sort: 'year' } },
+    { key: 'oscar-nominated', title: 'Indicados ao Oscar de Melhor Filme', filters: { ...base, oscar: 'nominated', oscarCategories: ['picture'], minVotes: 0, sort: 'rating' } },
+    { key: 'oscar-international', title: 'Oscar de Filme Internacional', filters: { ...base, oscar: 'won', oscarCategories: ['international'], minVotes: 0, sort: 'year' } },
     { key: 'top', title: 'Nota IMDb 8+', filters: { ...base, ...WELL_RATED, minRating: 8 } },
     ...genreIds
       .filter((id) => genreName.has(id))

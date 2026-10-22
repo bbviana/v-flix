@@ -79,6 +79,22 @@ const MIGRATIONS: Migration[] = [
   CREATE TABLE watched (tmdb_id INTEGER PRIMARY KEY, watched_at TEXT NOT NULL);
   CREATE TABLE watchlist (tmdb_id INTEGER PRIMARY KEY, added_at TEXT NOT NULL);
   `,
+
+  // v5: várias categorias do Oscar. Melhor Filme migra; as demais vêm na próxima sync.
+  `
+  CREATE TABLE oscar_award (
+    imdb_id TEXT NOT NULL,
+    category TEXT NOT NULL,
+    year INTEGER,
+    won INTEGER NOT NULL,
+    PRIMARY KEY (imdb_id, category)
+  );
+  CREATE INDEX idx_oscar_award_category ON oscar_award(category, won);
+  INSERT INTO oscar_award (imdb_id, category, year, won)
+    SELECT imdb_id, 'picture', year, won FROM oscar_best_picture;
+  DROP TABLE oscar_best_picture;
+  DELETE FROM sync_meta WHERE key = 'oscar_synced_at';
+  `,
 ];
 
 export const DATABASE_NAME = 'vflix.db';

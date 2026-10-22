@@ -1,5 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+import { OSCAR_CATEGORIES } from '@/lib/oscar';
+
 export type ProviderCount = { id: number; name: string; logo_path: string | null; count: number };
 
 export type CatalogSummary = {
@@ -21,11 +23,11 @@ export async function getCatalogSummary(db: SQLiteDatabase): Promise<CatalogSumm
     db.getFirstAsync<{ total: number; with_rating: number; nominees: number; winners: number }>(`
       SELECT COUNT(*) AS total,
              COUNT(r.imdb_id) AS with_rating,
-             COUNT(o.imdb_id) AS nominees,
-             COALESCE(SUM(o.won), 0) AS winners
+             COUNT(o.best) AS nominees,
+             COALESCE(SUM(o.best), 0) AS winners
       FROM movie m
       LEFT JOIN imdb_rating r ON r.imdb_id = m.imdb_id
-      LEFT JOIN oscar_best_picture o ON o.imdb_id = m.imdb_id
+      LEFT JOIN (SELECT imdb_id, MAX(won) AS best FROM oscar_award GROUP BY imdb_id) o ON o.imdb_id = m.imdb_id
       WHERE EXISTS (SELECT 1 FROM movie_provider mp WHERE mp.tmdb_id = m.tmdb_id)`),
   ]);
   return {
@@ -52,27 +54,25 @@ export type MovieDetail = {
   cast: string[];
   rating: number | null;
   votes: number | null;
-  oscar_year: number | null;
-  oscar_won: number | null;
+  oscars: { category: string; year: number | null; won: number }[];
   genres: string[];
   countries: { iso: string; name: string }[];
   providers: { id: number; name: string; logo_path: string | null }[];
 };
 
 export async function getMovieDetail(db: SQLiteDatabase, tmdbId: number): Promise<MovieDetail | null> {
-  const movie = await db.getFirstAsync<Omit<MovieDetail, 'cast' | 'genres' | 'countries' | 'providers'> & { top_cast: string | null }>(
+  const movie = await db.getFirstAsync<Omit<MovieDetail, 'cast' | 'genres' | 'countries' | 'providers' | 'oscars'> & { top_cast: string | null }>(
     `SELECT m.tmdb_id, m.imdb_id, m.title, m.original_title, m.overview, m.year, m.runtime,
             m.poster_path, m.backdrop_path, m.certification_br, m.director, m.top_cast,
-            r.rating, r.votes, o.year AS oscar_year, o.won AS oscar_won
+            r.rating, r.votes
      FROM movie m
      LEFT JOIN imdb_rating r ON r.imdb_id = m.imdb_id
-     LEFT JOIN oscar_best_picture o ON o.imdb_id = m.imdb_id
      WHERE m.tmdb_id = ?`,
     tmdbId,
   );
   if (!movie) return null;
 
-  const [genres, countries, providers] = await Promise.all([
+  const [genres, countries, providers, oscars] = await Promise.all([
     db.getAllAsync<{ name: string }>(
       'SELECT g.name FROM movie_genre mg JOIN genre g ON g.id = mg.genre_id WHERE mg.tmdb_id = ? ORDER BY g.name',
       tmdbId,
@@ -87,6 +87,12 @@ export async function getMovieDetail(db: SQLiteDatabase, tmdbId: number): Promis
        JOIN provider p ON p.id = mp.provider_id WHERE mp.tmdb_id = ? ORDER BY p.name`,
       tmdbId,
     ),
+    movie.imdb_id
+      ? db.getAllAsync<MovieDetail['oscars'][number]>(
+          'SELECT category, year, won FROM oscar_award WHERE imdb_id = ?',
+          movie.imdb_id,
+        )
+      : Promise.resolve([]),
   ]);
 
   const { top_cast, ...rest } = movie;
@@ -96,6 +102,8 @@ export async function getMovieDetail(db: SQLiteDatabase, tmdbId: number): Promis
     genres: genres.map((g) => g.name),
     countries,
     providers,
+    // Ordem fixa das categorias (Melhor Filme primeiro).
+    oscars: OSCAR_CATEGORIES.flatMap((c) => oscars.filter((o) => o.category === c.id)),
   };
 }
 

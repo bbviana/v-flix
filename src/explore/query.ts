@@ -58,8 +58,15 @@ export function buildWhere(f: Filters) {
     where.push('r.votes >= ?');
     params.push(f.minVotes);
   }
-  if (f.oscar === 'nominated') where.push('o.imdb_id IS NOT NULL');
-  if (f.oscar === 'won') where.push('o.won = 1');
+  if (f.oscar !== 'all') {
+    const conds = ['oa.imdb_id = m.imdb_id'];
+    if (f.oscar === 'won') conds.push('oa.won = 1');
+    if (f.oscarCategories.length) {
+      conds.push(`oa.category IN (${placeholders(f.oscarCategories.length)})`);
+      params.push(...f.oscarCategories);
+    }
+    where.push(`EXISTS (SELECT 1 FROM oscar_award oa WHERE ${conds.join(' AND ')})`);
+  }
   if (f.watched === 'watched') where.push(WATCHED);
   if (f.watched === 'unwatched') where.push(`NOT ${WATCHED}`);
 
@@ -75,15 +82,17 @@ const ORDER_BY: Record<Filters['sort'], string> = {
 
 const FROM = `
   FROM movie m
-  LEFT JOIN imdb_rating r ON r.imdb_id = m.imdb_id
-  LEFT JOIN oscar_best_picture o ON o.imdb_id = m.imdb_id`;
+  LEFT JOIN imdb_rating r ON r.imdb_id = m.imdb_id`;
+
+/** Melhor situação no Oscar em qualquer categoria: 1 venceu, 0 indicado, NULL nenhuma. */
+const OSCAR_STATUS = '(SELECT MAX(oa.won) FROM oscar_award oa WHERE oa.imdb_id = m.imdb_id)';
 
 export type ExploreItem = PosterItem;
 
 export async function exploreMovies(db: SQLiteDatabase, f: Filters, limit: number, offset: number) {
   const { where, params } = buildWhere(f);
   return db.getAllAsync<ExploreItem>(
-    `SELECT m.tmdb_id, m.title, m.poster_path, r.rating, o.won AS oscar_won,
+    `SELECT m.tmdb_id, m.title, m.poster_path, r.rating, ${OSCAR_STATUS} AS oscar_won,
             ${WATCHED} AS watched, ${AVAILABLE} AS available ${FROM}
      WHERE ${where}
      ORDER BY ${ORDER_BY[f.sort]}, m.tmdb_id

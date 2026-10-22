@@ -1,5 +1,6 @@
 import { fetchWithRetry } from '@/api/http';
 import { bulkInsert, getMeta, setMeta } from '@/db/helpers';
+import { OSCAR_CATEGORIES, type OscarCategory } from '@/lib/oscar';
 
 import type { SyncStep } from './types';
 
@@ -9,32 +10,51 @@ const USER_AGENT = 'v-flix/1.0 (personal non-commercial app)';
 const REFRESH_DAYS = 30;
 
 /**
- * Q102427 = Oscar de Melhor Filme (Academy Award for Best Picture).
- * P166 = prêmio recebido, P1411 = indicado a, P345 = IMDb ID, P585 = data.
- * O prêmio também é atribuído aos produtores, por isso o filtro em "tt"
- * (filmes) descarta os IDs "nm" (pessoas).
+ * P166 = prêmio recebido, P1411 = indicado a, P345 = IMDb ID, P585 = data,
+ * P1686 = "pela obra". Quatro consultas simples (≈1 s cada), unidas no app:
+ * vitórias e indicações, declaradas no próprio filme ou na pessoa (produtor,
+ * roteirista) com o filme em P1686 — sem este caminho o roteiro perde vários
+ * anos recentes. Só o filme é lido; nomes de pessoas não interessam.
+ * Uma consulta única com UNIONs e YEAR() levava ~2 min e estourava o limite de 60 s.
  */
-const QUERY = `
-SELECT ?imdb ?ano ?venceu WHERE {
-  { ?f p:P166 ?st . ?st ps:P166 wd:Q102427 . BIND(true AS ?venceu) }
-  UNION
-  { ?f p:P1411 ?st . ?st ps:P1411 wd:Q102427 . BIND(false AS ?venceu) }
-  ?f wdt:P345 ?imdb .
-  FILTER(STRSTARTS(?imdb, "tt"))
-  OPTIONAL { ?st pq:P585 ?d . BIND(YEAR(?d) AS ?ano) }
-}`;
+const ITEMS = OSCAR_CATEGORIES.map((c) => `wd:${c.wikidata}`).join(' ');
+const QUERIES = (['P166', 'P1411'] as const).flatMap((prop) =>
+  (['film', 'person'] as const).map((via) => ({
+    won: prop === 'P166',
+    sparql: `
+      SELECT ?premio ?imdb ?d WHERE {
+        VALUES ?premio { ${ITEMS} }
+        ${via === 'film' ? '?f' : '?p'} p:${prop} ?st . ?st ps:${prop} ?premio .
+        ${via === 'person' ? '?st pq:P1686 ?f .' : ''}
+        ?f wdt:P345 ?imdb .
+        FILTER(STRSTARTS(?imdb, "tt"))
+        OPTIONAL { ?st pq:P585 ?d }
+      }`,
+  })),
+);
 
-type Binding = { imdb: { value: string }; venceu: { value: string }; ano?: { value: string } };
+type Binding = { premio: { value: string }; imdb: { value: string }; d?: { value: string } };
+
+/**
+ * Proteção contra resposta parcial: mínimos bem abaixo dos números reais
+ * (out/2026: Filme 605/98, Internacional 342/71, Original 425/85, Adaptado 472/97).
+ */
+const MINIMUMS: Record<OscarCategory, { films: number; winners: number }> = {
+  picture: { films: 400, winners: 80 },
+  international: { films: 200, winners: 50 },
+  original_screenplay: { films: 250, winners: 60 },
+  adapted_screenplay: { films: 250, winners: 60 },
+};
 
 /** Preenche o ano faltante com o lançamento + 1 (a cerimônia é no ano seguinte). */
 const FILL_MISSING_YEARS = `
-  UPDATE oscar_best_picture
-  SET year = (SELECT m.year + 1 FROM movie m WHERE m.imdb_id = oscar_best_picture.imdb_id AND m.year IS NOT NULL)
+  UPDATE oscar_award
+  SET year = (SELECT m.year + 1 FROM movie m WHERE m.imdb_id = oscar_award.imdb_id AND m.year IS NOT NULL)
   WHERE year IS NULL`;
 
 export const oscarStep: SyncStep = {
   id: 'oscar',
-  title: 'Oscar de Melhor Filme',
+  title: 'Oscar',
   async run({ db, signal, report }) {
     const meta = await getMeta(db);
     const last = meta.oscar_synced_at ? Date.parse(meta.oscar_synced_at) : 0;
@@ -48,54 +68,79 @@ export const oscarStep: SyncStep = {
       };
     }
 
-    report({ message: 'Consultando o Wikidata…' });
-    const res = await fetchWithRetry(
-      `${SPARQL_URL}?query=${encodeURIComponent(QUERY)}`,
-      { headers: { Accept: 'application/sparql-results+json', 'User-Agent': USER_AGENT } },
-      { signal, retries: 3, baseDelayMs: 2000 },
-    );
-    const bindings = ((await res.json()) as { results: { bindings: Binding[] } }).results.bindings;
-
-    // Um vencedor aparece como indicado e como vencedor: won = MAX(won).
-    // Se houver mais de um ano (datas inconsistentes nas primeiras cerimônias), fica o menor.
-    const byImdb = new Map<string, { won: boolean; year: number | null }>();
-    for (const b of bindings) {
-      const imdbId = b.imdb.value;
-      const won = b.venceu.value === 'true';
-      const year = b.ano ? Number(b.ano.value) : null;
-      const cur = byImdb.get(imdbId) ?? { won: false, year: null };
-      cur.won ||= won;
-      if (year !== null && (cur.year === null || year < cur.year)) cur.year = year;
-      byImdb.set(imdbId, cur);
+    const results: { won: boolean; bindings: Binding[] }[] = [];
+    for (const [i, q] of QUERIES.entries()) {
+      report({ message: `Consultando o Wikidata (${i + 1}/${QUERIES.length})…`, progress: i / QUERIES.length });
+      const res = await fetchWithRetry(
+        `${SPARQL_URL}?query=${encodeURIComponent(q.sparql)}`,
+        { headers: { Accept: 'application/sparql-results+json', 'User-Agent': USER_AGENT } },
+        { signal, retries: 3, baseDelayMs: 2000 },
+      );
+      const json = (await res.json()) as { results: { bindings: Binding[] } };
+      results.push({ won: q.won, bindings: json.results.bindings });
     }
 
-    const winners = [...byImdb.values()].filter((v) => v.won).length;
-    // Proteção contra resposta parcial: hoje são ~600 indicados e ~100 vencedores.
-    if (byImdb.size < 400 || winners < 80) {
-      throw new Error(`Resposta do Wikidata incompleta (${byImdb.size} filmes, ${winners} vencedores)`);
+    const categoryByItem = new Map(
+      OSCAR_CATEGORIES.map((c) => [`http://www.wikidata.org/entity/${c.wikidata}`, c.id]),
+    );
+
+    // Consolida por (filme, categoria): um vencedor aparece como indicado e como
+    // vencedor (won = MAX); com mais de um ano (datas inconsistentes), fica o menor.
+    const awards = new Map<string, { imdbId: string; category: OscarCategory; won: boolean; year: number | null }>();
+    for (const { won, bindings } of results) {
+      for (const b of bindings) {
+        const category = categoryByItem.get(b.premio.value);
+        if (!category) continue;
+        const imdbId = b.imdb.value;
+        const key = `${imdbId}|${category}`;
+        const cur = awards.get(key) ?? { imdbId, category, won: false, year: null };
+        cur.won ||= won;
+        const year = b.d ? Number(b.d.value.slice(0, 4)) : NaN; // "2020-02-09T00:00:00Z"
+        if (Number.isFinite(year) && (cur.year === null || year < cur.year)) cur.year = year;
+        awards.set(key, cur);
+      }
+    }
+
+    const stats = new Map<OscarCategory, { films: number; winners: number }>();
+    for (const a of awards.values()) {
+      const s = stats.get(a.category) ?? { films: 0, winners: 0 };
+      s.films++;
+      if (a.won) s.winners++;
+      stats.set(a.category, s);
+    }
+    for (const c of OSCAR_CATEGORIES) {
+      const s = stats.get(c.id) ?? { films: 0, winners: 0 };
+      if (s.films < MINIMUMS[c.id].films || s.winners < MINIMUMS[c.id].winners) {
+        throw new Error(`Resposta do Wikidata incompleta para ${c.label} (${s.films} filmes, ${s.winners} vencedores)`);
+      }
     }
 
     await db.withExclusiveTransactionAsync(async (txn) => {
-      await txn.runAsync('DELETE FROM oscar_best_picture');
+      await txn.runAsync('DELETE FROM oscar_award');
       await bulkInsert(
         txn,
-        'oscar_best_picture',
-        ['imdb_id', 'year', 'won'],
-        [...byImdb].map(([imdbId, v]) => [imdbId, v.year, v.won ? 1 : 0]),
+        'oscar_award',
+        ['imdb_id', 'category', 'year', 'won'],
+        [...awards.values()].map((a) => [a.imdbId, a.category, a.year, a.won ? 1 : 0]),
       );
       await txn.runAsync(FILL_MISSING_YEARS);
       await setMeta(txn, {
         oscar_synced_at: new Date().toISOString(),
-        oscar_nominees: byImdb.size,
-        oscar_winners: winners,
+        ...Object.fromEntries(
+          [...stats].flatMap(([cat, s]) => [
+            [`oscar_${cat}_films`, s.films],
+            [`oscar_${cat}_winners`, s.winners],
+          ]),
+        ),
       });
     });
 
-    const inCatalog = await db.getFirstAsync<{ nominees: number; winners: number }>(`
-      SELECT COUNT(*) AS nominees, COALESCE(SUM(o.won), 0) AS winners
-      FROM oscar_best_picture o
+    const inCatalog = await db.getFirstAsync<{ films: number; winners: number }>(`
+      SELECT COUNT(DISTINCT o.imdb_id) AS films,
+             COUNT(DISTINCT CASE WHEN o.won = 1 THEN o.imdb_id END) AS winners
+      FROM oscar_award o
       JOIN movie m ON m.imdb_id = o.imdb_id
       WHERE EXISTS (SELECT 1 FROM movie_provider mp WHERE mp.tmdb_id = m.tmdb_id)`);
-    return `${byImdb.size} indicados (${winners} vencedores) · no catálogo: ${inCatalog?.nominees ?? 0} (${inCatalog?.winners ?? 0} vencedores)`;
+    return `${awards.size} indicações em ${OSCAR_CATEGORIES.length} categorias · no catálogo: ${inCatalog?.films ?? 0} filmes (${inCatalog?.winners ?? 0} vencedores)`;
   },
 };
