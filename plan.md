@@ -216,6 +216,15 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
    - Filme que sai de todos os catálogos continua na lista, marcado como indisponível, em vez de sumir.
    - Integração com o item 1: ao marcar um filme como visto, oferecer tirá-lo da lista (ou tirar automaticamente).
 
+9. **Orçamento e bilheteria no Detalhe.**
+   - `budget` e `revenue` já vêm na resposta de `/movie/{id}` que baixamos; basta guardar (novas colunas em `movie`) e exibir na ficha técnica ("Orçamento US$ 11 mi · Bilheteria US$ 258 mi").
+   - A TMDB usa `0` para desconhecido: nesse caso, omitir.
+   - Filmes já sincronizados precisam rebuscar detalhes para preencher (ou aceitar que só os novos terão o dado até um refresh).
+10. **Recomendações ("Se gostou, veja também").**
+    - Acrescentar `recommendations` ao `append_to_response` dos detalhes (mesma chamada, payload maior). Guardar a relação numa tabela `movie_recommendation (tmdb_id, recommended_id, rank)`.
+    - No Detalhe, uma fileira com as recomendações **que estão no catálogo** (as de fora não são assistíveis).
+    - Combina com a "Minha lista" (item 8): adicionar direto da fileira.
+
 ## Fora do escopo (por enquanto)
 
 Séries, outros prêmios fora do Oscar (Globo de Ouro etc.), deep links para os apps dos serviços, sincronização automática/em segundo plano, backend, login.
