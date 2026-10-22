@@ -5,7 +5,15 @@ import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { getMeta } from '@/db/helpers';
-import { getHomeGenres, getHomeHideWatched, setHomeGenres, setHomeHideWatched } from '@/db/settings';
+import {
+  getHomeGenres,
+  getHomeHideWatched,
+  getServices,
+  setHomeGenres,
+  setHomeHideWatched,
+  setServices,
+} from '@/db/settings';
+import { SERVICES } from '@/lib/services';
 import { colors, radius, spacing, type } from '@/theme';
 
 type Genre = { id: number; name: string };
@@ -16,6 +24,7 @@ export default function SettingsScreen() {
   const [selected, setSelected] = useState<number[]>([]);
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [hideWatched, setHideWatched] = useState(false);
+  const [services, setServicesState] = useState<string[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -24,11 +33,13 @@ export default function SettingsScreen() {
         getHomeGenres(db),
         getMeta(db),
         getHomeHideWatched(db),
-      ]).then(([g, s, meta, hide]) => {
+        getServices(db),
+      ]).then(([g, s, meta, hide, sv]) => {
         setGenres(g);
         setSelected(s);
         setLastSync(meta.last_sync_at ?? null);
         setHideWatched(hide);
+        setServicesState(sv);
       });
     }, [db]),
   );
@@ -38,6 +49,15 @@ export default function SettingsScreen() {
     const next = selected.includes(id) ? selected.filter((g) => g !== id) : [...selected, id];
     setSelected(next);
     setHomeGenres(db, next);
+  };
+
+  // Pelo menos um serviço fica marcado: sem nenhum, a sincronização não tem o que buscar.
+  const toggleService = (label: string) => {
+    const on = services.includes(label);
+    if (on && services.length === 1) return;
+    const next = on ? services.filter((s) => s !== label) : [...services, label];
+    setServicesState(next);
+    setServices(db, next);
   };
 
   return (
@@ -54,6 +74,32 @@ export default function SettingsScreen() {
             </Pressable>
           </Link>
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Serviços</Text>
+        <View style={styles.group}>
+          {SERVICES.map((sv, i) => (
+            <Pressable
+              key={sv.label}
+              onPress={() => toggleService(sv.label)}
+              style={({ pressed }) => [
+                styles.row,
+                i < SERVICES.length - 1 && styles.divider,
+                pressed && styles.rowPressed,
+              ]}
+            >
+              <Text style={styles.rowTitle}>{sv.label}</Text>
+              {sv.free && <Text style={styles.rowDetail}>Grátis</Text>}
+              <View style={styles.check}>
+                {services.includes(sv.label) && <Ionicons name="checkmark" size={20} color={colors.accent} />}
+              </View>
+            </Pressable>
+          ))}
+        </View>
+        <Text style={styles.footnote}>
+          Desmarcar tira os filmes do serviço na hora. Os marcados entram na próxima sincronização.
+        </Text>
       </View>
 
       <View style={styles.section}>
@@ -130,5 +176,6 @@ const styles = StyleSheet.create({
   divider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator },
   rowTitle: { ...type.callout, color: colors.text, flex: 1 },
   rowDetail: { ...type.callout, color: colors.textSecondary },
+  check: { width: 20, alignItems: 'flex-end' },
   footnote: { ...type.footnote, color: colors.textTertiary, paddingHorizontal: spacing.lg },
 });

@@ -1,6 +1,6 @@
 # v-flix
 
-App Android pessoal, estilo Netflix, que reúne num só lugar os **filmes** disponíveis por assinatura no **Brasil** em **Netflix, Prime Video, Disney+ e HBO Max**. Cada filme vem com a **nota do IMDb** e o **Oscar** (Melhor Filme, Filme Internacional e Roteiro, indicado/vencedor), orçamento e bilheteria, e pode ser filtrado por gênero, país, serviço, nota, votos, ano e Oscar.
+App Android pessoal, estilo Netflix, que reúne num só lugar os **filmes** disponíveis por assinatura no **Brasil** em **Netflix, Prime Video, Disney+ e HBO Max** (padrão; outros 11 serviços, como Globoplay, MUBI e Apple TV, podem ser ligados nas Configurações). Cada filme vem com a **nota do IMDb** e o **Oscar** (Melhor Filme, Filme Internacional e Roteiro, indicado/vencedor), orçamento e bilheteria, e pode ser filtrado por gênero, país, serviço, nota, votos, ano e Oscar.
 
 Não há backend: o próprio celular baixa os dados, cruza as fontes e guarda tudo num SQLite local. O plano completo está em [`plan.md`](plan.md).
 

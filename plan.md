@@ -170,7 +170,7 @@ Ordem combinada depois do passo 8 (os números de feature referem-se a "Features
 2. ✅ Feature 2: **mais categorias do Oscar** (Filme Internacional; verificar Roteiro).
 3. ✅ Feature 9: **orçamento e bilheteria**.
 4. ✅ Feature 10: **recomendações**.
-5. Feature 11: **escolher os serviços de streaming**.
+5. ✅ Feature 11: **escolher os serviços de streaming**.
 6. Passo 10: **dump inicial embutido** (depois das mudanças de esquema acima, para não refazer o dump várias vezes).
 7. Feature 6: **ícone do app**.
 8. Feature 7: **filmes para locação** (aumenta o catálogo; regerar o dump depois).
@@ -241,7 +241,7 @@ Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 
     - No Detalhe, uma fileira com as recomendações **que estão no catálogo** (as de fora não são assistíveis).
     - Combina com a "Minha lista" (item 8): adicionar direto da fileira.
 
-11. **Escolher os serviços de streaming.**
+11. ✅ **Escolher os serviços de streaming.**
     - Hoje o app acompanha 4 serviços fixos (Netflix, Prime Video, Disney+, HBO Max). Permitir escolher quais usar, numa seção das Configurações.
     - Opções: os serviços de assinatura disponíveis no BR segundo a TMDB (ex.: Apple TV+, Paramount+, Globoplay, MUBI, Looke, Claro video…), com os 4 atuais marcados por padrão. A Crunchyroll fica para o suporte a séries (feature 12).
     - A etapa 1 da sincronização deixa de exigir os 4 nomes fixos: grava todos os provedores de assinatura do BR (nome e logo) e a etapa 2 busca só os escolhidos. Os nomes comerciais (Prime Video, Disney+) continuam vindo de um mapa de apelidos.

@@ -1,18 +1,9 @@
 import { tmdbGet, type TmdbCountry, type TmdbGenre, type TmdbProvider } from '@/api/tmdb';
 import { bulkInsert } from '@/db/helpers';
+import { getServices } from '@/db/settings';
+import { SERVICES } from '@/lib/services';
 
 import type { SyncStep } from './types';
-
-/**
- * Nomes aceitos para cada serviço, em ordem de preferência. A comparação é exata
- * para não pegar variantes como "Netflix Standard with Ads" ou "HBO Max Amazon Channel".
- */
-const WANTED: { label: string; names: string[] }[] = [
-  { label: 'Netflix', names: ['Netflix'] },
-  { label: 'Prime Video', names: ['Amazon Prime Video'] },
-  { label: 'Disney+', names: ['Disney Plus', 'Disney+'] },
-  { label: 'HBO Max', names: ['HBO Max', 'Max'] },
-];
 
 // Países históricos que a TMDB não traduz.
 const COUNTRY_NAMES_PT: Record<string, string> = {
@@ -35,21 +26,27 @@ export const providersStep: SyncStep = {
       tmdbGet<TmdbCountry[]>('/configuration/countries', { language: 'pt-BR' }, signal),
     ]);
 
+    const chosen = new Set(await getServices(db));
+    const wanted = SERVICES.filter((s) => chosen.has(s.label));
+    if (wanted.length === 0) throw new Error('Nenhum serviço escolhido nas Configurações.');
+
     const byName = new Map(providers.map((p) => [p.provider_name.toLowerCase(), p]));
     // Grava o nome como o serviço se apresenta (label), não o nome da TMDB.
     const selected: (TmdbProvider & { label: string })[] = [];
     const missing: string[] = [];
-    for (const { label, names } of WANTED) {
+    for (const { label, names } of wanted) {
       const match = names.map((n) => byName.get(n.toLowerCase())).find(Boolean);
       if (match) selected.push({ ...match, label });
       else missing.push(label);
     }
+    // Melhor abortar do que seguir sem um serviço escolhido: a etapa seguinte
+    // substitui o catálogo inteiro e os filmes dele sumiriam.
     if (missing.length) {
       throw new Error(`Provedores não encontrados na TMDB: ${missing.join(', ')}`);
     }
 
     await db.withExclusiveTransactionAsync(async (txn) => {
-      // A tabela provider guarda só os 4 serviços acompanhados; trocar inteira
+      // A tabela provider guarda só os serviços escolhidos; trocar inteira
       // garante que um ID antigo (ex.: após rebrand) não fique para trás.
       await txn.runAsync('DELETE FROM provider');
       await bulkInsert(
