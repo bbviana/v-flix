@@ -166,7 +166,7 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
 
 Ordem combinada depois do passo 8 (os números de feature referem-se a "Features futuras"):
 
-1. Features 1 e 8 juntas: **marcar como visto** e **Minha lista** (mesmas tabelas do usuário, botões no Detalhe e filtros no Explorar).
+1. ✅ Features 1 e 8 juntas: **marcar como visto** e **Minha lista** (mesmas tabelas do usuário, botões no Detalhe e filtros no Explorar).
 2. Feature 2: **mais categorias do Oscar** (Filme Internacional; verificar Roteiro).
 3. Feature 9: **orçamento e bilheteria**.
 4. Feature 10: **recomendações**.
@@ -189,7 +189,7 @@ Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 
 
 ## Features futuras
 
-1. **Marcar filme como visto.**
+1. **Marcar filme como visto.** ✅ Feito (junto com o item 8).
    - Botão no Detalhe para marcar e desmarcar. Os dados ficam numa tabela local (`watched (tmdb_id PRIMARY KEY, watched_at TEXT)`), que a sincronização nunca apaga.
    - Filtro no Explorar: todos / não vistos / vistos. Avaliar se as fileiras da Início devem esconder os já vistos.
    - Se o dump inicial (passo 10) substituir o banco numa reinstalação, a tabela `watched` precisa ser preservada.
@@ -225,7 +225,7 @@ Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 
    - UX: o padrão continua **só assinatura** (Início e Explorar). Aluguel aparece num filtro do Explorar ("Assinatura / Aluguel / Todos") e no Detalhe ("Para alugar em …"). O usuário escolhe nas Configurações quais lojas entram.
    - A TMDB não informa **preço**: o app mostra onde alugar, não quanto custa.
 
-8. **Minha lista (filmes que pretendo ver).**
+8. **Minha lista (filmes que pretendo ver).** ✅ Feito: marcar como visto tira o filme da lista automaticamente; opção "Esconder filmes vistos" na Início (padrão: desligada).
    - Botão no Detalhe para adicionar e remover ("+ Minha lista" / "✓ Na lista").
    - Tabela local `watchlist (tmdb_id PRIMARY KEY, added_at TEXT)`, que a sincronização nunca apaga e que o dump inicial (passo 10) preserva. Mesmo tratamento da tabela `watched` (item 1).
    - Fileira **"Minha lista"** no topo da Início (só aparece se houver filmes), mais recentes primeiro, e filtro no Explorar.

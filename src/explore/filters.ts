@@ -2,7 +2,9 @@ import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 
 export type OscarFilter = 'all' | 'nominated' | 'won';
-export type SortBy = 'rating' | 'popularity' | 'year';
+/** 'added' = data de entrada na Minha lista (usado pela fileira da Início). */
+export type SortBy = 'rating' | 'popularity' | 'year' | 'added';
+export type WatchedFilter = 'all' | 'unwatched' | 'watched';
 
 export type Filters = {
   query: string;
@@ -13,6 +15,9 @@ export type Filters = {
   minVotes: number;
   decades: number[]; // 1990 = 1990–1999
   oscar: OscarFilter;
+  watched: WatchedFilter;
+  /** Só filmes da Minha lista (inclui os que saíram do catálogo). */
+  inList: boolean;
   sort: SortBy;
 };
 
@@ -25,6 +30,8 @@ export const DEFAULT_FILTERS: Filters = {
   minVotes: 1000, // esconde filmes obscuros com poucas notas
   decades: [],
   oscar: 'all',
+  watched: 'all',
+  inList: false,
   sort: 'popularity',
 };
 
@@ -56,7 +63,9 @@ export function activeFilterCount(f: Filters) {
     (f.decades.length ? 1 : 0) +
     (f.minRating !== null ? 1 : 0) +
     (f.minVotes !== DEFAULT_FILTERS.minVotes ? 1 : 0) +
-    (f.oscar !== 'all' ? 1 : 0)
+    (f.oscar !== 'all' ? 1 : 0) +
+    (f.watched !== 'all' ? 1 : 0) +
+    (f.inList ? 1 : 0)
   );
 }
 
@@ -72,6 +81,8 @@ export function useFilterValues(): Filters {
       minVotes: s.minVotes,
       decades: s.decades,
       oscar: s.oscar,
+      watched: s.watched,
+      inList: s.inList,
       sort: s.sort,
     })),
   );

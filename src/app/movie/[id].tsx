@@ -4,11 +4,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
+import type { ComponentProps } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { posterUrl } from '@/api/tmdb';
 import { getMovieDetail, type MovieDetail } from '@/db/queries';
+import { getUserState, setInList, setWatched, type UserState } from '@/db/user-lists';
 import { flagEmoji, formatRating, formatRuntime, formatVotes } from '@/lib/format';
 import { colors, radius, spacing, type } from '@/theme';
 
@@ -62,6 +64,65 @@ export default function MovieScreen() {
   );
 }
 
+function UserActions({ tmdbId }: { tmdbId: number }) {
+  const db = useSQLiteContext();
+  const [state, setState] = useState<UserState | null>(null);
+
+  useEffect(() => {
+    getUserState(db, tmdbId).then(setState);
+  }, [db, tmdbId]);
+
+  if (!state) return <View style={styles.actions} />;
+
+  const toggleList = async () => {
+    await setInList(db, tmdbId, !state.inList);
+    setState(await getUserState(db, tmdbId));
+  };
+  const toggleWatched = async () => {
+    await setWatched(db, tmdbId, !state.watched);
+    setState(await getUserState(db, tmdbId));
+  };
+
+  return (
+    <View style={styles.actions}>
+      <ActionButton
+        icon={state.inList ? 'checkmark' : 'add'}
+        label={state.inList ? 'Na lista' : 'Minha lista'}
+        active={state.inList}
+        onPress={toggleList}
+      />
+      <ActionButton
+        icon={state.watched ? 'eye' : 'eye-outline'}
+        label={state.watched ? 'Visto' : 'Marcar como visto'}
+        active={state.watched}
+        onPress={toggleWatched}
+      />
+    </View>
+  );
+}
+
+type ActionButtonProps = {
+  icon: ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  active: boolean;
+  onPress: () => void;
+};
+
+function ActionButton({ icon, label, active, onPress }: ActionButtonProps) {
+  const color = active ? colors.background : colors.text;
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.action, active && styles.actionActive, pressed && { opacity: 0.75 }]}
+    >
+      <Ionicons name={icon} size={18} color={color} />
+      <Text style={[styles.actionText, { color }]} numberOfLines={1}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 function MovieBody({ movie }: { movie: MovieDetail }) {
   const meta = [movie.year, formatRuntime(movie.runtime)].filter(Boolean).join(' · ');
   const showOriginal = movie.original_title && movie.original_title !== movie.title;
@@ -86,6 +147,8 @@ function MovieBody({ movie }: { movie: MovieDetail }) {
           </Text>
         )}
       </View>
+
+      <UserActions tmdbId={movie.tmdb_id} />
 
       {(movie.rating !== null || movie.oscar_won !== null) && (
         <View style={styles.highlights}>
@@ -125,6 +188,10 @@ function MovieBody({ movie }: { movie: MovieDetail }) {
             ))}
           </View>
         </View>
+      )}
+
+      {movie.providers.length === 0 && (
+        <Text style={styles.unavailable}>Fora dos seus serviços no momento.</Text>
       )}
 
       {movie.overview && <Text style={styles.overview}>{movie.overview}</Text>}
@@ -174,6 +241,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     paddingVertical: 1,
   },
+  actions: { flexDirection: 'row', gap: spacing.sm, minHeight: 44 },
+  action: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    height: 44,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  actionActive: { backgroundColor: colors.text },
+  actionText: { ...type.subhead, fontWeight: '600' },
   highlights: { flexDirection: 'row', gap: spacing.xxl },
   highlight: { gap: 2 },
   highlightValue: { ...type.title, color: colors.text },
@@ -186,6 +266,7 @@ const styles = StyleSheet.create({
   providerLogo: { width: 28, height: 28, borderRadius: radius.sm },
   providerName: { ...type.subhead, color: colors.text },
   overview: { ...type.body, color: colors.text },
+  unavailable: { ...type.subhead, color: colors.textSecondary },
   facts: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.separator },
   fact: {
     flexDirection: 'row',

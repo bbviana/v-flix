@@ -2,10 +2,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Link, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { getMeta } from '@/db/helpers';
-import { getHomeGenres, setHomeGenres } from '@/db/settings';
+import { getHomeGenres, getHomeHideWatched, setHomeGenres, setHomeHideWatched } from '@/db/settings';
 import { colors, radius, spacing, type } from '@/theme';
 
 type Genre = { id: number; name: string };
@@ -15,6 +15,7 @@ export default function SettingsScreen() {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
   const [lastSync, setLastSync] = useState<string | null>(null);
+  const [hideWatched, setHideWatched] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -22,10 +23,12 @@ export default function SettingsScreen() {
         db.getAllAsync<Genre>('SELECT id, name FROM genre ORDER BY name'),
         getHomeGenres(db),
         getMeta(db),
-      ]).then(([g, s, meta]) => {
+        getHomeHideWatched(db),
+      ]).then(([g, s, meta, hide]) => {
         setGenres(g);
         setSelected(s);
         setLastSync(meta.last_sync_at ?? null);
+        setHideWatched(hide);
       });
     }, [db]),
   );
@@ -50,6 +53,24 @@ export default function SettingsScreen() {
               <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
             </Pressable>
           </Link>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Início</Text>
+        <View style={styles.group}>
+          <View style={styles.row}>
+            <Text style={styles.rowTitle}>Esconder filmes vistos</Text>
+            <Switch
+              value={hideWatched}
+              onValueChange={(v) => {
+                setHideWatched(v);
+                setHomeHideWatched(db, v);
+              }}
+              trackColor={{ false: colors.surfaceAlt, true: colors.success }}
+              thumbColor={colors.text}
+            />
+          </View>
         </View>
       </View>
 

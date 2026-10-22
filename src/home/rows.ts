@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import type { PosterItem } from '@/db/queries';
-import { getHomeGenres } from '@/db/settings';
+import { getHomeGenres, getHomeHideWatched } from '@/db/settings';
 import { DEFAULT_FILTERS, type Filters } from '@/explore/filters';
 import { exploreMovies } from '@/explore/query';
 
@@ -16,22 +16,27 @@ export type HomeRow = { key: string; title: string; filters: Filters; movies: Po
  * fileira e o "Ver tudo", então os dois sempre batem.
  */
 export async function loadHomeRows(db: SQLiteDatabase): Promise<HomeRow[]> {
-  const [genreIds, genres] = await Promise.all([
+  const [genreIds, hideWatched, genres] = await Promise.all([
     getHomeGenres(db),
+    getHomeHideWatched(db),
     db.getAllAsync<{ id: number; name: string }>('SELECT id, name FROM genre'),
   ]);
   const genreName = new Map(genres.map((g) => [g.id, g.name]));
 
+  // Opcionalmente esconde os já vistos; o "ver tudo" herda o mesmo filtro.
+  const base: Filters = { ...DEFAULT_FILTERS, watched: hideWatched ? 'unwatched' : 'all' };
+
   const defs: Omit<HomeRow, 'movies'>[] = [
-    { key: 'oscar-won', title: 'Vencedores do Oscar de Melhor Filme', filters: { ...DEFAULT_FILTERS, oscar: 'won', minVotes: 0, sort: 'year' } },
-    { key: 'oscar-nominated', title: 'Indicados ao Oscar', filters: { ...DEFAULT_FILTERS, oscar: 'nominated', minVotes: 0, sort: 'rating' } },
-    { key: 'top', title: 'Nota IMDb 8+', filters: { ...DEFAULT_FILTERS, ...WELL_RATED, minRating: 8 } },
+    { key: 'watchlist', title: 'Minha lista', filters: { ...DEFAULT_FILTERS, inList: true, minVotes: 0, sort: 'added' } },
+    { key: 'oscar-won', title: 'Vencedores do Oscar de Melhor Filme', filters: { ...base, oscar: 'won', minVotes: 0, sort: 'year' } },
+    { key: 'oscar-nominated', title: 'Indicados ao Oscar', filters: { ...base, oscar: 'nominated', minVotes: 0, sort: 'rating' } },
+    { key: 'top', title: 'Nota IMDb 8+', filters: { ...base, ...WELL_RATED, minRating: 8 } },
     ...genreIds
       .filter((id) => genreName.has(id))
       .map((id) => ({
         key: `genre-${id}`,
         title: genreName.get(id)!,
-        filters: { ...DEFAULT_FILTERS, ...WELL_RATED, genres: [id] },
+        filters: { ...base, ...WELL_RATED, genres: [id] },
       })),
   ];
 

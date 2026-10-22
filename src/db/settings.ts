@@ -15,3 +15,7 @@ async function setSetting(db: SQLiteDatabase, key: string, value: unknown) {
 /** Gêneros com fileira na Início, na ordem em que aparecem. */
 export const getHomeGenres = (db: SQLiteDatabase) => getSetting(db, 'home_genres', DEFAULT_HOME_GENRES);
 export const setHomeGenres = (db: SQLiteDatabase, ids: number[]) => setSetting(db, 'home_genres', ids);
+
+/** Esconde das fileiras da Início (exceto Minha lista) os filmes já vistos. */
+export const getHomeHideWatched = (db: SQLiteDatabase) => getSetting(db, 'home_hide_watched', false);
+export const setHomeHideWatched = (db: SQLiteDatabase, value: boolean) => setSetting(db, 'home_hide_watched', value);

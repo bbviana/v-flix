@@ -12,13 +12,18 @@ type Props = { movie: PosterItem; width: number };
 
 export function PosterCard({ movie, width }: Props) {
   const hasOscar = movie.oscar_won !== null && movie.oscar_won !== undefined;
+  const unavailable = movie.available === 0;
 
   return (
     <Link href={{ pathname: '/movie/[id]', params: { id: movie.tmdb_id } }} asChild>
       <Pressable style={({ pressed }) => [{ width }, pressed && styles.pressed]}>
         <View style={[styles.frame, { width, height: width * 1.5 }]}>
           {movie.poster_path ? (
-            <Image source={posterUrl(movie.poster_path)} style={StyleSheet.absoluteFill} transition={200} />
+            <Image
+              source={posterUrl(movie.poster_path)}
+              style={[StyleSheet.absoluteFill, unavailable && styles.dimmed]}
+              transition={200}
+            />
           ) : (
             // Sem pôster: o título ocupa o lugar, discreto.
             <Text style={styles.fallback} numberOfLines={4}>
@@ -30,6 +35,18 @@ export function PosterCard({ movie, width }: Props) {
             <View style={[styles.badge, styles.oscar]}>
               {/* Preenchido = venceu; contorno = indicado. */}
               <Ionicons name={movie.oscar_won ? 'trophy' : 'trophy-outline'} size={11} color={colors.oscar} />
+            </View>
+          )}
+
+          {unavailable && (
+            <View style={[styles.badge, styles.unavailable]}>
+              <Text style={styles.badgeText}>Indisponível</Text>
+            </View>
+          )}
+
+          {!!movie.watched && (
+            <View style={[styles.badge, styles.watched]}>
+              <Ionicons name="checkmark" size={12} color={colors.text} />
             </View>
           )}
 
@@ -64,4 +81,8 @@ const styles = StyleSheet.create({
   oscar: { top: 6, right: 6, width: 20, height: 20 },
   rating: { bottom: 6, left: 6, paddingHorizontal: 5, height: 18, flexDirection: 'row', gap: 3 },
   ratingText: { fontSize: 11, fontWeight: '600', color: colors.text, letterSpacing: 0.1 },
+  watched: { bottom: 6, right: 6, width: 18, height: 18, borderRadius: 9 },
+  unavailable: { top: 6, left: 6, paddingHorizontal: 5, height: 18 },
+  badgeText: { fontSize: 10, fontWeight: '600', color: colors.textSecondary },
+  dimmed: { opacity: 0.4 },
 });

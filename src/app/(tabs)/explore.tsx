@@ -14,7 +14,12 @@ import { colors, radius, spacing, type } from '@/theme';
 const PAGE = 60;
 const COLUMNS = 3;
 const GAP = spacing.sm;
-const SORT_LABEL: Record<SortBy, string> = { popularity: 'popularidade', rating: 'nota IMDb', year: 'lançamento' };
+const SORT_LABEL: Record<SortBy, string> = {
+  popularity: 'popularidade',
+  rating: 'nota IMDb',
+  year: 'lançamento',
+  added: 'adicionados recentemente',
+};
 
 export default function ExploreScreen() {
   const db = useSQLiteContext();

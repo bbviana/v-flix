@@ -73,6 +73,12 @@ const MIGRATIONS: Migration[] = [
 
   // v3: preferências do usuário (a sincronização nunca mexe aqui).
   `CREATE TABLE app_setting (key TEXT PRIMARY KEY, value TEXT NOT NULL);`,
+
+  // v4: listas do usuário (a sincronização nunca mexe aqui).
+  `
+  CREATE TABLE watched (tmdb_id INTEGER PRIMARY KEY, watched_at TEXT NOT NULL);
+  CREATE TABLE watchlist (tmdb_id INTEGER PRIMARY KEY, added_at TEXT NOT NULL);
+  `,
 ];
 
 export const DATABASE_NAME = 'vflix.db';

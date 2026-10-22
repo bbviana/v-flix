@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Chip, ChipGroup, Segmented } from '@/components/chip';
-import { activeFilterCount, useFilters, useFilterValues, type OscarFilter, type SortBy } from '@/explore/filters';
+import { activeFilterCount, useFilters, useFilterValues, type OscarFilter, type SortBy, type WatchedFilter } from '@/explore/filters';
 import { exploreCount, getFilterOptions, type FilterOptions } from '@/explore/query';
 import { colors, radius, spacing, type } from '@/theme';
 
@@ -18,6 +18,11 @@ const OSCAR_OPTIONS: { value: OscarFilter; label: string }[] = [
   { value: 'all', label: 'Todos' },
   { value: 'nominated', label: 'Indicados' },
   { value: 'won', label: 'Vencedores' },
+];
+const WATCHED_OPTIONS: { value: WatchedFilter; label: string }[] = [
+  { value: 'all', label: 'Todos' },
+  { value: 'unwatched', label: 'Não vistos' },
+  { value: 'watched', label: 'Vistos' },
 ];
 const RATING_OPTIONS: { value: number | null; label: string }[] = [
   { value: null, label: 'Qualquer' },
@@ -82,6 +87,13 @@ export default function FiltersScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Section title="Ordenar por">
           <Segmented options={SORT_OPTIONS} value={f.sort} onChange={(sort) => set({ sort })} />
+        </Section>
+
+        <Section title="Seus filmes">
+          <Segmented options={WATCHED_OPTIONS} value={f.watched} onChange={(watched) => set({ watched })} />
+          <ChipGroup>
+            <Chip label="Só da Minha lista" selected={f.inList} onPress={() => set({ inList: !f.inList })} />
+          </ChipGroup>
         </Section>
 
         {options && options.providers.length > 0 && (

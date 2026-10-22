@@ -7,10 +7,20 @@ import type { Filters } from './filters';
 
 const placeholders = (n: number) => Array.from({ length: n }, () => '?').join(',');
 
+const AVAILABLE = 'EXISTS (SELECT 1 FROM movie_provider mp WHERE mp.tmdb_id = m.tmdb_id)';
+const WATCHED = 'EXISTS (SELECT 1 FROM watched w WHERE w.tmdb_id = m.tmdb_id)';
+
 /** Transforma os filtros em WHERE + parâmetros. Cada filtro é um AND; listas são OR internamente. */
 export function buildWhere(f: Filters) {
-  const where: string[] = ['EXISTS (SELECT 1 FROM movie_provider mp WHERE mp.tmdb_id = m.tmdb_id)'];
+  const where: string[] = [];
   const params: SQLiteBindValue[] = [];
+
+  if (f.inList) {
+    // A Minha lista mostra também filmes que saíram do catálogo (marcados como indisponíveis).
+    where.push('EXISTS (SELECT 1 FROM watchlist wl WHERE wl.tmdb_id = m.tmdb_id)');
+  } else {
+    where.push(AVAILABLE);
+  }
 
   const words = normalize(f.query).split(/\s+/).filter(Boolean);
   for (const w of words) {
@@ -50,6 +60,8 @@ export function buildWhere(f: Filters) {
   }
   if (f.oscar === 'nominated') where.push('o.imdb_id IS NOT NULL');
   if (f.oscar === 'won') where.push('o.won = 1');
+  if (f.watched === 'watched') where.push(WATCHED);
+  if (f.watched === 'unwatched') where.push(`NOT ${WATCHED}`);
 
   return { where: where.join(' AND '), params };
 }
@@ -58,6 +70,7 @@ const ORDER_BY: Record<Filters['sort'], string> = {
   rating: 'r.rating IS NULL, r.rating DESC, r.votes DESC',
   popularity: 'm.popularity DESC',
   year: 'm.year IS NULL, m.release_date DESC',
+  added: '(SELECT wl.added_at FROM watchlist wl WHERE wl.tmdb_id = m.tmdb_id) DESC',
 };
 
 const FROM = `
@@ -70,7 +83,8 @@ export type ExploreItem = PosterItem;
 export async function exploreMovies(db: SQLiteDatabase, f: Filters, limit: number, offset: number) {
   const { where, params } = buildWhere(f);
   return db.getAllAsync<ExploreItem>(
-    `SELECT m.tmdb_id, m.title, m.poster_path, r.rating, o.won AS oscar_won ${FROM}
+    `SELECT m.tmdb_id, m.title, m.poster_path, r.rating, o.won AS oscar_won,
+            ${WATCHED} AS watched, ${AVAILABLE} AS available ${FROM}
      WHERE ${where}
      ORDER BY ${ORDER_BY[f.sort]}, m.tmdb_id
      LIMIT ? OFFSET ?`,
