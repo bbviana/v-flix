@@ -3,12 +3,12 @@ import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Platform, Pressable, StyleSheet, Text, ToastAndroid, View } from 'react-native';
 
 import { posterUrl } from '@/api/tmdb';
 import type { PosterItem } from '@/db/queries';
-import { setInList, setWatched } from '@/db/user-lists';
+import { setInList, setWatched, useUserFlags } from '@/db/user-lists';
 import { formatRating } from '@/lib/format';
 import { colors, radius, spacing, type } from '@/theme';
 
@@ -81,19 +81,16 @@ const DOUBLE_TAP_MS = 250;
 
 /**
  * Atalhos sem abrir o Detalhe: toque duplo marca/desmarca como visto e toque longo
- * põe/tira da Minha lista. O pôster reflete na hora; o banco é gravado em seguida.
+ * põe/tira da Minha lista. O pôster reflete na hora (via `useUserFlags`); o banco é gravado em seguida.
  */
 function usePosterActions(movie: PosterItem) {
   const db = useSQLiteContext();
-  const [watched, setWatchedLocal] = useSyncedFlag(!!movie.watched);
-  const [inList, setInListLocal] = useSyncedFlag(!!movie.in_list);
+  const { watched, inList } = useUserFlags(movie.tmdb_id, { watched: !!movie.watched, inList: !!movie.in_list });
   const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => clearTimeout(tapTimer.current ?? undefined), []);
 
   const toggleWatched = async () => {
     const next = !watched;
-    setWatchedLocal(next);
-    if (next) setInListLocal(false); // marcar como visto tira da lista
     feedback(next ? 'Marcado como visto' : 'Desmarcado como visto');
     await setWatched(db, movie.tmdb_id, next);
   };
@@ -114,23 +111,11 @@ function usePosterActions(movie: PosterItem) {
 
   const onLongPress = async () => {
     const next = !inList;
-    setInListLocal(next);
     feedback(next ? 'Adicionado à Minha lista' : 'Removido da Minha lista');
     await setInList(db, movie.tmdb_id, next);
   };
 
   return { watched, inList, onPress, onLongPress };
-}
-
-/** Estado local que volta a seguir o banco quando a consulta é refeita (ex.: Início recarregada). */
-function useSyncedFlag(fromDb: boolean) {
-  const [value, setValue] = useState(fromDb);
-  const [prevFromDb, setPrevFromDb] = useState(fromDb);
-  if (fromDb !== prevFromDb) {
-    setPrevFromDb(fromDb);
-    setValue(fromDb);
-  }
-  return [value, setValue] as const;
 }
 
 function feedback(message: string) {
