@@ -202,6 +202,13 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
    - Android usa ícone adaptativo: `android-icon-foreground.png`, `android-icon-background.png` e `android-icon-monochrome.png` (ícones temáticos do Android 13+), mais `icon.png` (1024×1024) e `splash-icon.png`. Configurados em `app.json`.
    - Fazer antes do build do APK (passo 9) ficar definitivo, já que o ícone vai no APK.
 
+7. **Filmes disponíveis para locação.**
+   - **Viável, já medido** (out/2026): 16.404 filmes para alugar no BR, quase todos na Apple TV Store (12.033), Amazon Video (9.996) e Claro video (3.202). Numa amostra, só ~20% já estão nos serviços de assinatura: **o catálogo iria de ~13 mil para ~26 mil**.
+   - Impacto: a 1ª sincronização vai de ~9 min/~90 MB para ~18 min/~165 MB (o dump inicial do passo 10 absorve isso); banco de ~12 para ~24 MB; filtros continuam instantâneos.
+   - Esquema: `movie_provider` ganha o tipo de acesso (`flatrate` / `rent`). A etapa de disponibilidade busca também as lojas escolhidas; a Apple TV passa de 10 mil e usa o fatiamento por data.
+   - UX: o padrão continua **só assinatura** (Início e Explorar). Aluguel aparece num filtro do Explorar ("Assinatura / Aluguel / Todos") e no Detalhe ("Para alugar em …"). O usuário escolhe nas Configurações quais lojas entram.
+   - A TMDB não informa **preço**: o app mostra onde alugar, não quanto custa.
+
 ## Fora do escopo (por enquanto)
 
 Séries, outros prêmios fora do Oscar (Globo de Ouro etc.), deep links para os apps dos serviços, sincronização automática/em segundo plano, backend, login.
