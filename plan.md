@@ -176,7 +176,7 @@ Ordem combinada depois do passo 8 (os números de feature referem-se a "Features
 8. Feature 7: **filmes para locação** (aumenta o catálogo; regerar o dump depois).
 9. Passo 9: **build do APK** (`eas.json`).
 
-Sem posição definida: feature 12 (**séries**, com a Crunchyroll).
+Sem posição definida: feature 12 (**séries**, com a Crunchyroll) e feature 13 (**ocultar países**).
 
 ## Verificações
 
@@ -254,6 +254,13 @@ Sem posição definida: feature 12 (**séries**, com a Crunchyroll).
     - Esquema: tabela própria (`show`) ou uma coluna de tipo em `movie` (renomeada para algo como `title`). Séries têm temporadas, episódios e datas de início/fim em vez de duração e ano único.
     - UI: alternar Filmes / Séries no Explorar e fileiras próprias na Início. Prêmios: o Oscar não se aplica (Emmy ficaria para depois).
     - **Crunchyroll entra junto com séries:** o catálogo dela é quase todo de séries de anime (só 153 filmes no BR, medido em out/2026), então só vale a pena com suporte a séries.
+
+13. **Ocultar filmes de países escolhidos.**
+    - Motivação: muitos filmes indianos geram ruído. Nova seção nas Configurações, "Países ocultos", com a lista de países do catálogo (mais frequentes primeiro) para marcar.
+    - **Regra: ocultar só se todos os países de produção do filme estiverem na lista.** Medido em out/2026: 1.114 filmes têm a Índia, 1.046 são só indianos. Os outros 68 são coproduções como *1917*, *Pixels* e *The Post*, em que a Índia aparece por participação de empresas indianas; com a regra "algum país", eles sumiriam indevidamente.
+    - 744 filmes do catálogo não têm país cadastrado e passariam pelo filtro. Avaliar complementar com o **idioma original** (ex.: ocultar também filmes em hindi, tâmil, telugo, malaiala e canarês quando a Índia estiver oculta) ou oferecer "idiomas ocultos" junto.
+    - Vale para todo o app: fileiras da Início, Explorar (resultados e contagens) e opções de filtro. No Explorar, uma nota discreta ("1.046 filmes ocultos pelas configurações") evita confusão.
+    - Implementação: guardar em `app_setting` e aplicar em `buildWhere` como uma condição a mais (`EXISTS` de algum país fora da lista, ou filme sem país).
 
 ## Fora do escopo (por enquanto)
 
