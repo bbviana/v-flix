@@ -44,13 +44,15 @@ Não há backend: o próprio celular baixa os dados, cruza as fontes e guarda tu
 ```
 src/
   app/            # telas (expo-router): cada arquivo é uma rota, _layout.tsx define o navegador
-  api/
-    http.ts       # fetchWithRetry, mapWithConcurrency
-    tmdb.ts       # cliente da TMDB, tipos das respostas, URLs de imagem
-  db/
-    migrations.ts # esquema SQLite e migrações
+    (tabs)/       # abas Início e Explorar
+  api/            # fetchWithRetry, cliente da TMDB
+  components/     # PosterCard, Chip/Segmented
+  db/             # migrações, consultas, configurações do usuário
+  explore/        # estado dos filtros (zustand) e filtros → SQL
+  home/           # fileiras da Início (cada uma é um conjunto de filtros do Explorar)
+  lib/            # formatação e normalização de busca
   sync/           # etapas da sincronização (uma por arquivo)
-  theme/          # cores, espaçamentos, tema de navegação
+  theme/          # cores, espaçamentos, tipografia
 ```
 
 Código que não é tela fica fora de `src/app/`.

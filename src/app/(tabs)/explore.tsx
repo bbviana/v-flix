@@ -25,6 +25,12 @@ export default function ExploreScreen() {
 
   // A busca é digitada localmente e aplicada com um pequeno atraso.
   const [text, setText] = useState(filters.query);
+  // Se a busca mudar por fora (ex.: "ver tudo" de uma fileira da Início), o campo acompanha.
+  const [appliedQuery, setAppliedQuery] = useState(filters.query);
+  if (filters.query !== appliedQuery) {
+    setAppliedQuery(filters.query);
+    setText(filters.query);
+  }
   useEffect(() => {
     const t = setTimeout(() => setFilters({ query: text }), 200);
     return () => clearTimeout(t);

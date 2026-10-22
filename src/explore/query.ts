@@ -65,12 +65,12 @@ const FROM = `
   LEFT JOIN imdb_rating r ON r.imdb_id = m.imdb_id
   LEFT JOIN oscar_best_picture o ON o.imdb_id = m.imdb_id`;
 
-export type ExploreItem = PosterItem & { rating: number | null };
+export type ExploreItem = PosterItem;
 
 export async function exploreMovies(db: SQLiteDatabase, f: Filters, limit: number, offset: number) {
   const { where, params } = buildWhere(f);
   return db.getAllAsync<ExploreItem>(
-    `SELECT m.tmdb_id, m.title, m.poster_path, r.rating ${FROM}
+    `SELECT m.tmdb_id, m.title, m.poster_path, r.rating, o.won AS oscar_won ${FROM}
      WHERE ${where}
      ORDER BY ${ORDER_BY[f.sort]}, m.tmdb_id
      LIMIT ? OFFSET ?`,

@@ -99,14 +99,11 @@ export async function getMovieDetail(db: SQLiteDatabase, tmdbId: number): Promis
   };
 }
 
-export type PosterItem = { tmdb_id: number; title: string; poster_path: string | null };
-
-/** Provisório até a tela Início (passo 8). */
-export async function getPopular(db: SQLiteDatabase, limit = 20) {
-  return db.getAllAsync<PosterItem>(
-    `SELECT m.tmdb_id, m.title, m.poster_path FROM movie m
-     WHERE EXISTS (SELECT 1 FROM movie_provider mp WHERE mp.tmdb_id = m.tmdb_id)
-     ORDER BY m.popularity DESC LIMIT ?`,
-    limit,
-  );
-}
+export type PosterItem = {
+  tmdb_id: number;
+  title: string;
+  poster_path: string | null;
+  rating?: number | null;
+  /** 1 = venceu, 0 = indicado, null = nenhum (Oscar de Melhor Filme) */
+  oscar_won?: number | null;
+};

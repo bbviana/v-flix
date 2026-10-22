@@ -1,69 +1,94 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Link, useFocusEffect } from 'expo-router';
+import { Link, router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PosterCard } from '@/components/poster-card';
-import { getPopular, type PosterItem } from '@/db/queries';
+import { useFilters } from '@/explore/filters';
+import { loadHomeRows, type HomeRow } from '@/home/rows';
 import { colors, radius, spacing, type } from '@/theme';
 
-// Tela provisória: a Início com fileiras chega no passo 8.
+const CARD_WIDTH = 116;
+
 export default function HomeScreen() {
   const db = useSQLiteContext();
   const insets = useSafeAreaInsets();
-  const [popular, setPopular] = useState<PosterItem[] | null>(null);
+  const [rows, setRows] = useState<HomeRow[] | null>(null);
 
+  // Recarrega ao voltar (sync ou mudança de gêneros nas configurações).
   useFocusEffect(
     useCallback(() => {
-      getPopular(db).then(setPopular);
+      loadHomeRows(db).then(setRows);
     }, [db]),
   );
-
-  if (popular === null) return <View style={styles.screen} />;
-
-  if (popular.length === 0) {
-    return (
-      <View style={[styles.screen, styles.empty]}>
-        <Text style={styles.emptyTitle}>Nenhum filme ainda</Text>
-        <Text style={styles.emptyText}>Sincronize para trazer os catálogos dos seus serviços.</Text>
-        <SyncButton />
-      </View>
-    );
-  }
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Início</Text>
-        <Link href="/sync" asChild>
+        <Link href="/settings" asChild>
           <Pressable hitSlop={10} style={({ pressed }) => pressed && { opacity: 0.6 }}>
-            <Ionicons name="sync" size={22} color={colors.text} />
+            <Ionicons name="settings-outline" size={22} color={colors.text} />
           </Pressable>
         </Link>
       </View>
-      <Text style={styles.rowTitle}>Populares</Text>
+
+      {rows === null ? null : rows.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <ScrollView contentContainerStyle={styles.rows} showsVerticalScrollIndicator={false}>
+          {rows.map((row) => (
+            <Row key={row.key} row={row} />
+          ))}
+        </ScrollView>
+      )}
+    </View>
+  );
+}
+
+function Row({ row }: { row: HomeRow }) {
+  const setFilters = useFilters((s) => s.set);
+
+  const seeAll = () => {
+    setFilters(row.filters);
+    router.navigate('/explore');
+  };
+
+  return (
+    <View style={styles.row}>
+      <Pressable onPress={seeAll} style={styles.rowHeader} hitSlop={6}>
+        <Text style={styles.rowTitle} numberOfLines={1}>
+          {row.title}
+        </Text>
+        <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+      </Pressable>
       <FlatList
         horizontal
-        data={popular}
+        data={row.movies}
         keyExtractor={(m) => String(m.tmdb_id)}
-        renderItem={({ item }) => <PosterCard movie={item} width={120} />}
-        contentContainerStyle={styles.row}
+        renderItem={({ item }) => <PosterCard movie={item} width={CARD_WIDTH} />}
+        contentContainerStyle={styles.rowList}
         showsHorizontalScrollIndicator={false}
-        style={{ flexGrow: 0 }}
+        initialNumToRender={4}
+        windowSize={3}
       />
     </View>
   );
 }
 
-function SyncButton() {
+function EmptyState() {
   return (
-    <Link href="/sync" asChild>
-      <Pressable style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}>
-        <Text style={styles.buttonText}>Sincronizar</Text>
-      </Pressable>
-    </Link>
+    <View style={styles.empty}>
+      <Text style={styles.emptyTitle}>Nenhum filme ainda</Text>
+      <Text style={styles.emptyText}>Sincronize para trazer os catálogos dos seus serviços.</Text>
+      <Link href="/sync" asChild>
+        <Pressable style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}>
+          <Text style={styles.buttonText}>Sincronizar</Text>
+        </Pressable>
+      </Link>
+    </View>
   );
 }
 
@@ -74,14 +99,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   title: { ...type.largeTitle, color: colors.text },
-  empty: { alignItems: 'center', justifyContent: 'center', gap: spacing.md, paddingHorizontal: spacing.xxl },
+  rows: { gap: spacing.xxl, paddingBottom: spacing.xxl },
+  row: { gap: spacing.md },
+  rowHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.xl,
+    alignSelf: 'flex-start',
+  },
+  rowTitle: { ...type.headline, color: colors.text },
+  rowList: { paddingHorizontal: spacing.xl, gap: spacing.sm },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, paddingHorizontal: spacing.xxl },
   emptyTitle: { ...type.title, color: colors.text },
   emptyText: { ...type.callout, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.md },
-  rowTitle: { ...type.headline, color: colors.text, paddingHorizontal: spacing.xl, marginBottom: spacing.md },
-  row: { paddingHorizontal: spacing.xl, gap: spacing.sm },
   button: {
     backgroundColor: colors.accent,
     borderRadius: radius.pill,

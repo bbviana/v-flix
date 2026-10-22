@@ -1,14 +1,18 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { posterUrl } from '@/api/tmdb';
 import type { PosterItem } from '@/db/queries';
+import { formatRating } from '@/lib/format';
 import { colors, radius, spacing, type } from '@/theme';
 
 type Props = { movie: PosterItem; width: number };
 
 export function PosterCard({ movie, width }: Props) {
+  const hasOscar = movie.oscar_won !== null && movie.oscar_won !== undefined;
+
   return (
     <Link href={{ pathname: '/movie/[id]', params: { id: movie.tmdb_id } }} asChild>
       <Pressable style={({ pressed }) => [{ width }, pressed && styles.pressed]}>
@@ -20,6 +24,20 @@ export function PosterCard({ movie, width }: Props) {
             <Text style={styles.fallback} numberOfLines={4}>
               {movie.title}
             </Text>
+          )}
+
+          {hasOscar && (
+            <View style={[styles.badge, styles.oscar]}>
+              {/* Preenchido = venceu; contorno = indicado. */}
+              <Ionicons name={movie.oscar_won ? 'trophy' : 'trophy-outline'} size={11} color={colors.oscar} />
+            </View>
+          )}
+
+          {movie.rating != null && (
+            <View style={[styles.badge, styles.rating]}>
+              <Ionicons name="star" size={9} color={colors.imdb} />
+              <Text style={styles.ratingText}>{formatRating(movie.rating)}</Text>
+            </View>
           )}
         </View>
       </Pressable>
@@ -36,4 +54,14 @@ const styles = StyleSheet.create({
   },
   fallback: { ...type.footnote, color: colors.textSecondary, textAlign: 'center', padding: spacing.sm },
   pressed: { opacity: 0.75, transform: [{ scale: 0.98 }] },
+  badge: {
+    position: 'absolute',
+    backgroundColor: 'rgba(0,0,0,0.62)',
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  oscar: { top: 6, right: 6, width: 20, height: 20 },
+  rating: { bottom: 6, left: 6, paddingHorizontal: 5, height: 18, flexDirection: 'row', gap: 3 },
+  ratingText: { fontSize: 11, fontWeight: '600', color: colors.text, letterSpacing: 0.1 },
 });

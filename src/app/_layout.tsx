@@ -21,6 +21,7 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="settings" options={{ title: 'Configurações' }} />
           <Stack.Screen name="sync" options={{ title: 'Sincronização' }} />
           <Stack.Screen name="filters" options={{ title: 'Filtros', presentation: 'modal' }} />
         </Stack>

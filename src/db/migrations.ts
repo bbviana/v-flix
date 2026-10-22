@@ -70,6 +70,9 @@ const MIGRATIONS: Migration[] = [
       await db.runAsync('UPDATE movie SET search_text = ? WHERE tmdb_id = ?', searchKey(r.title, r.original_title), r.tmdb_id);
     }
   },
+
+  // v3: preferências do usuário (a sincronização nunca mexe aqui).
+  `CREATE TABLE app_setting (key TEXT PRIMARY KEY, value TEXT NOT NULL);`,
 ];
 
 export const DATABASE_NAME = 'vflix.db';
