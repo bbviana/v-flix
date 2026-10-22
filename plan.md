@@ -191,6 +191,12 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
    - Desenhar junto com o ícone do Oscar (item 3), para os dois não competirem: por exemplo, a nota num canto inferior e o troféu no superior, em selos pequenos e semitransparentes que não cubram o pôster.
    - A consulta do Explorar já traz `rating`; falta incluir nas fileiras da Início e no `PosterCard`.
 
+5. **Bandeira e país na linha de metadados do Detalhe.**
+   - No fim da linha "2019 · 2h 12min", acrescentar a bandeira e o nome do país: "2019 · 2h 12min · 🇰🇷 Coreia do Sul".
+   - Bandeira como emoji gerado a partir do código ISO (`KR` → 🇰🇷), sem imagens nem dependências.
+   - Com vários países de produção: decidir entre mostrar só o principal ou todos ("🇺🇸 🇬🇧 Estados Unidos, Reino Unido"). A TMDB devolve `production_countries` sem indicar qual é o principal, então "principal" precisa de um critério (ex.: o país da produtora, ou o idioma original).
+   - Avaliar remover a linha "País" da ficha técnica, para não repetir a informação.
+
 ## Fora do escopo (por enquanto)
 
 Séries, outros prêmios fora do Oscar (Globo de Ouro etc.), deep links para os apps dos serviços, sincronização automática/em segundo plano, backend, login.
