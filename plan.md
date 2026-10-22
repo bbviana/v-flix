@@ -209,6 +209,13 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
    - UX: o padrão continua **só assinatura** (Início e Explorar). Aluguel aparece num filtro do Explorar ("Assinatura / Aluguel / Todos") e no Detalhe ("Para alugar em …"). O usuário escolhe nas Configurações quais lojas entram.
    - A TMDB não informa **preço**: o app mostra onde alugar, não quanto custa.
 
+8. **Minha lista (filmes que pretendo ver).**
+   - Botão no Detalhe para adicionar e remover ("+ Minha lista" / "✓ Na lista").
+   - Tabela local `watchlist (tmdb_id PRIMARY KEY, added_at TEXT)`, que a sincronização nunca apaga e que o dump inicial (passo 10) preserva. Mesmo tratamento da tabela `watched` (item 1).
+   - Fileira **"Minha lista"** no topo da Início (só aparece se houver filmes), mais recentes primeiro, e filtro no Explorar.
+   - Filme que sai de todos os catálogos continua na lista, marcado como indisponível, em vez de sumir.
+   - Integração com o item 1: ao marcar um filme como visto, oferecer tirá-lo da lista (ou tirar automaticamente).
+
 ## Fora do escopo (por enquanto)
 
 Séries, outros prêmios fora do Oscar (Globo de Ouro etc.), deep links para os apps dos serviços, sincronização automática/em segundo plano, backend, login.
