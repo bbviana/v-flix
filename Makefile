@@ -3,7 +3,7 @@
 
 TSX = npx tsx --env-file=.env --tsconfig tsconfig.json
 
-.PHONY: dump dump-fresh
+.PHONY: dump dump-fresh icons
 
 ## Atualiza assets/db/vflix.db a partir do dump atual (só busca o que mudou)
 dump:
@@ -12,3 +12,7 @@ dump:
 ## Gera o dump do zero (~10 min)
 dump-fresh:
 	$(TSX) scripts/dump.ts --fresh
+
+## Regera os ícones em assets/images/ (requer Pillow)
+icons:
+	python3 scripts/icons.py

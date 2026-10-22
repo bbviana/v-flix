@@ -110,6 +110,10 @@ make dump-fresh   # gera do zero (~10 min)
 
 O script (`scripts/dump.ts`) roda as mesmas etapas de `src/sync/` no Node, com um adaptador de `node:sqlite` para a API do expo-sqlite (`scripts/node-sqlite.ts`). O dump usa os 4 serviços padrão e sai sem dados do usuário (vistos, Minha lista, configurações). Regere antes de cada build do APK e depois de mudanças no esquema.
 
+### Ícones
+
+Os ícones em `assets/images/` são gerados por `scripts/icons.py` (requer Pillow): `make icons`.
+
 ### Build do APK
 
 > Ainda não configurado. Será adicionado no passo 9 do plano (`eas.json` com o perfil `preview`).
