@@ -176,6 +176,8 @@ Ordem combinada depois do passo 8 (os números de feature referem-se a "Features
 8. Feature 7: **filmes para locação** (aumenta o catálogo; regerar o dump depois).
 9. Passo 9: **build do APK** (`eas.json`).
 
+Sem posição definida: feature 12 (**séries**, com a Crunchyroll).
+
 ## Verificações
 
 - Contagem por serviço plausível (ordem de milhares) e total único abaixo de ~20 mil.
@@ -241,11 +243,18 @@ Ordem combinada depois do passo 8 (os números de feature referem-se a "Features
 
 11. **Escolher os serviços de streaming.**
     - Hoje o app acompanha 4 serviços fixos (Netflix, Prime Video, Disney+, HBO Max). Permitir escolher quais usar, numa seção das Configurações.
-    - Opções: os serviços de assinatura disponíveis no BR segundo a TMDB (ex.: Apple TV+, Paramount+, Globoplay, MUBI, Crunchyroll, Looke, Claro video…), com os 4 atuais marcados por padrão.
+    - Opções: os serviços de assinatura disponíveis no BR segundo a TMDB (ex.: Apple TV+, Paramount+, Globoplay, MUBI, Looke, Claro video…), com os 4 atuais marcados por padrão. A Crunchyroll fica para o suporte a séries (feature 12).
     - A etapa 1 da sincronização deixa de exigir os 4 nomes fixos: grava todos os provedores de assinatura do BR (nome e logo) e a etapa 2 busca só os escolhidos. Os nomes comerciais (Prime Video, Disney+) continuam vindo de um mapa de apelidos.
     - Desmarcar um serviço remove os filmes dele na próxima sincronização (ou imediatamente, filtrando as consultas pelos serviços escolhidos).
     - Mais serviços aumentam o catálogo: todos os serviços de assinatura do BR somam ~20 mil filmes, contra ~13 mil hoje.
 
+12. **Suporte a séries.**
+    - Hoje o app é só de filmes. Acrescentar séries usando os equivalentes da TMDB: `/discover/tv` (mesmos filtros de região, monetização e provedor), `/tv/{id}` com `external_ids,aggregate_credits,content_ratings`.
+    - Notas do IMDb: o mesmo `title.ratings.tsv.gz` já cobre séries (por `imdb_id`), sem download extra.
+    - Esquema: tabela própria (`show`) ou uma coluna de tipo em `movie` (renomeada para algo como `title`). Séries têm temporadas, episódios e datas de início/fim em vez de duração e ano único.
+    - UI: alternar Filmes / Séries no Explorar e fileiras próprias na Início. Prêmios: o Oscar não se aplica (Emmy ficaria para depois).
+    - **Crunchyroll entra junto com séries:** o catálogo dela é quase todo de séries de anime (só 153 filmes no BR, medido em out/2026), então só vale a pena com suporte a séries.
+
 ## Fora do escopo (por enquanto)
 
-Séries, outros prêmios fora do Oscar (Globo de Ouro etc.), deep links para os apps dos serviços, sincronização automática/em segundo plano, backend, login.
+Outros prêmios fora do Oscar (Globo de Ouro etc.; séries ficaram como feature 12), deep links para os apps dos serviços, sincronização automática/em segundo plano, backend, login.
