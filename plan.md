@@ -176,7 +176,7 @@ Ordem combinada depois do passo 8 (os números de feature referem-se a "Features
 8. Feature 7: **filmes para locação** (aumenta o catálogo; regerar o dump depois).
 9. Passo 9: **build do APK** (`eas.json`).
 
-Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 ✅ (**ocultar países**), feature 14 ✅ (**clima e temas**) e feature 15 ✅ (**sync que continua ao sair da tela**).
+Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 ✅ (**ocultar países**), feature 14 ✅ (**clima e temas**), feature 15 ✅ (**sync que continua ao sair da tela**) e feature 16 (**Minha lista com toque longo**).
 
 ## Verificações
 
@@ -273,6 +273,11 @@ Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 
     - Mover a execução para um estado global (store zustand, fora da árvore da tela): a sync segue enquanto se navega pelo app e a tela só mostra o estado atual ao ser reaberta.
     - Indicador discreto do progresso fora da tela (ex.: na linha "Sincronização" das Configurações); cancelar continua sendo um botão explícito.
     - Continua exigindo o app aberto e a tela ligada (keep-awake); sync em segundo plano segue fora do escopo.
+
+16. **Adicionar à Minha lista com toque longo no pôster.**
+    - Em qualquer pôster (fileiras da Início, Explorar, recomendações do Detalhe), um toque longo põe ou tira o filme da Minha lista, sem abrir o Detalhe.
+    - Feedback discreto: vibração leve (`expo-haptics`, incluído no Expo Go) e um aviso curto ("Adicionado à Minha lista" / "Removido da Minha lista"). Se marcar, o pôster pode ganhar um indicador, como o ✓ de visto.
+    - Reaproveita `setInList` de `src/db/user-lists.ts`; a fileira "Minha lista" da Início recarrega ao voltar.
 
 ## Fora do escopo (por enquanto)
 
