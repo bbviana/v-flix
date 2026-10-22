@@ -16,11 +16,7 @@ export type HomeRow = { key: string; title: string; filters: Filters; movies: Po
  * fileira e o "Ver tudo", então os dois sempre batem.
  */
 export async function loadHomeRows(db: SQLiteDatabase): Promise<HomeRow[]> {
-  const [providers, genreIds, genres] = await Promise.all([
-    db.getAllAsync<{ id: number; name: string }>(
-      `SELECT p.id, p.name FROM provider p
-       ORDER BY (SELECT COUNT(*) FROM movie_provider mp WHERE mp.provider_id = p.id) DESC`,
-    ),
+  const [genreIds, genres] = await Promise.all([
     getHomeGenres(db),
     db.getAllAsync<{ id: number; name: string }>('SELECT id, name FROM genre'),
   ]);
@@ -30,11 +26,6 @@ export async function loadHomeRows(db: SQLiteDatabase): Promise<HomeRow[]> {
     { key: 'oscar-won', title: 'Vencedores do Oscar de Melhor Filme', filters: { ...DEFAULT_FILTERS, oscar: 'won', minVotes: 0, sort: 'year' } },
     { key: 'oscar-nominated', title: 'Indicados ao Oscar', filters: { ...DEFAULT_FILTERS, oscar: 'nominated', minVotes: 0, sort: 'rating' } },
     { key: 'top', title: 'Nota IMDb 8+', filters: { ...DEFAULT_FILTERS, ...WELL_RATED, minRating: 8 } },
-    ...providers.map((p) => ({
-      key: `provider-${p.id}`,
-      title: p.name,
-      filters: { ...DEFAULT_FILTERS, ...WELL_RATED, providers: [p.id] },
-    })),
     ...genreIds
       .filter((id) => genreName.has(id))
       .map((id) => ({

@@ -130,7 +130,7 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
    - Vencedores do Oscar de Melhor Filme
    - Indicados ao Oscar
    - Nota IMDb 8+ (com votos ≥ 10.000)
-   - Uma fileira por serviço (ordenada por nota IMDb)
+   - ~~Uma fileira por serviço~~ (removida a pedido: sem fileiras por serviço)
    - Algumas fileiras por gênero
 
    Sem dados, mostra um estado vazio com botão para sincronizar.
