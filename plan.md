@@ -176,7 +176,7 @@ Ordem combinada depois do passo 8 (os números de feature referem-se a "Features
 8. Feature 7: **filmes para locação** (aumenta o catálogo; regerar o dump depois).
 9. Passo 9: **build do APK** (`eas.json`).
 
-Sem posição definida: feature 12 (**séries**, com a Crunchyroll) e feature 13 (**ocultar países**).
+Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 (**ocultar países**) e feature 14 (**clima e temas**).
 
 ## Verificações
 
@@ -261,6 +261,13 @@ Sem posição definida: feature 12 (**séries**, com a Crunchyroll) e feature 13
     - **Opção "Sem país"** na mesma lista: marcada, oculta também os filmes sem país de produção cadastrado (744 no catálogo em out/2026).
     - Vale para todo o app: fileiras da Início, Explorar (resultados e contagens) e opções de filtro. No Explorar, uma nota discreta ("1.046 filmes ocultos pelas configurações") evita confusão.
     - Implementação: guardar em `app_setting` e aplicar em `buildWhere` como uma condição a mais: o filme aparece se tiver algum país fora da lista, ou se não tiver país e "Sem país" não estiver marcado.
+
+14. **Clima e temas (tags curadas a partir das palavras-chave da TMDB).**
+    - A TMDB tem palavras-chave por filme (`keywords`), mais específicas que gênero, incluindo palavras de clima (*audacious*, *bold*, *hopeful*, *inspirational*, *hilarious*, *mysterious*…) e temas (*time travel*, *based on true story*, *hero's journey*…).
+    - Poréns, medidos em out/2026: **só em inglês**; cobertura desigual (filmes com 10 mil+ votos têm em média 10,5 e só 3% ficam sem nenhuma; no catálogo inteiro a média é 5 e 28% ficam sem nenhuma); termos livres, com repetições e ruído ("aftercreditsstinger").
+    - Solução: uma **lista curada de ~30–50 tags em português**, cada uma agrupando várias palavras-chave em inglês. Ex.: Heroico (bravery, hero's journey, superhero, tragic hero), Emocionante (audacious, bold, frantic, race against time), Inspirador (inspirational, hopeful), Divertido (hilarious, amused, slapstick comedy), Sombrio (dark comedy, neo-noir, dark fantasy), Baseado em fatos reais (based on true story, biography), Baseado em livro (based on novel or book), Viagem no tempo (time travel, time warp).
+    - Dados: acrescentar `keywords` ao `append_to_response` dos detalhes (sem chamadas extras). Guardar as palavras-chave brutas (`movie_keyword (tmdb_id, keyword_id)` + `keyword (id, name)`) e aplicar o mapa curado nas consultas, para poder ajustar as tags sem rebuscar. Os filmes já sincronizados precisam de uma passada extra (`/movie/{id}/keywords`, payload pequeno).
+    - UI: filtro "Clima e temas" no Explorar; tags no Detalhe; possíveis fileiras na Início (ex.: "Inspiradores"). Filmes sem palavras-chave não aparecem nesses filtros.
 
 ## Fora do escopo (por enquanto)
 
