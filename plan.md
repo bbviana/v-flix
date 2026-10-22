@@ -196,6 +196,12 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
    - Bandeira como emoji gerado a partir do código ISO; países históricos sem emoji (União Soviética, Tchecoslováquia…) mostram só o nome, traduzido.
    - A linha "País" saiu da ficha técnica.
 
+6. **Ícone do app.**
+   - Hoje o app usa os ícones padrão do template do Expo (`assets/images/`).
+   - Criar um ícone próprio seguindo a diretriz visual (clean, elegante), e a splash screen combinando.
+   - Android usa ícone adaptativo: `android-icon-foreground.png`, `android-icon-background.png` e `android-icon-monochrome.png` (ícones temáticos do Android 13+), mais `icon.png` (1024×1024) e `splash-icon.png`. Configurados em `app.json`.
+   - Fazer antes do build do APK (passo 9) ficar definitivo, já que o ícone vai no APK.
+
 ## Fora do escopo (por enquanto)
 
 Séries, outros prêmios fora do Oscar (Globo de Ouro etc.), deep links para os apps dos serviços, sincronização automática/em segundo plano, backend, login.
