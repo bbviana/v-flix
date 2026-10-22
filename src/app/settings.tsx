@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import Constants from 'expo-constants';
 import { Link, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useState } from 'react';
@@ -27,6 +28,10 @@ type Genre = { id: number; name: string };
 
 /** Países mostrados antes de "Mostrar todos" (os marcados aparecem sempre). */
 const TOP_COUNTRIES = 10;
+
+const APP_VERSION = Constants.expoConfig?.version;
+// A data vem do app.config.ts. No Expo Go seria só a hora em que o servidor subiu.
+const BUILD_DATE: string | undefined = __DEV__ ? undefined : Constants.expoConfig?.extra?.buildDate;
 
 export default function SettingsScreen() {
   const db = useSQLiteContext();
@@ -232,6 +237,24 @@ export default function SettingsScreen() {
           </Text>
         </View>
       )}
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Sobre</Text>
+        <View style={styles.group}>
+          <View style={[styles.row, styles.divider]}>
+            <Text style={styles.rowTitle}>Versão</Text>
+            <Text style={styles.rowDetail}>{APP_VERSION ?? '—'}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.rowTitle}>Build</Text>
+            <Text style={styles.rowDetail}>
+              {BUILD_DATE
+                ? new Date(BUILD_DATE).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+                : 'Desenvolvimento'}
+            </Text>
+          </View>
+        </View>
+      </View>
     </ScrollView>
   );
 }
