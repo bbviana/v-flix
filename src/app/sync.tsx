@@ -2,13 +2,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { useSQLiteContext } from 'expo-sqlite';
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { posterUrl } from '@/api/tmdb';
 import { getMeta } from '@/db/helpers';
 import { getCatalogSummary, type CatalogSummary } from '@/db/queries';
-import { initialStepStates, runSync } from '@/sync/run-sync';
+import { useSync } from '@/sync/store';
 import type { StepState } from '@/sync/types';
 import { colors, radius, spacing, type } from '@/theme';
 
@@ -21,30 +21,16 @@ async function fetchSummary(db: SQLiteDatabase): Promise<Summary> {
 
 export default function SyncScreen() {
   const db = useSQLiteContext();
-  const [steps, setSteps] = useState<StepState[]>(initialStepStates);
-  const [running, setRunning] = useState(false);
+  const steps = useSync((s) => s.steps);
+  const running = useSync((s) => s.running);
+  const finishedAt = useSync((s) => s.finishedAt);
+  const { start, cancel } = useSync.getState();
   const [summary, setSummary] = useState<Summary | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
 
+  // A sync continua se a tela for fechada; ao terminar, os números são recarregados.
   useEffect(() => {
     fetchSummary(db).then(setSummary);
-  }, [db]);
-
-  // Cancela a sincronização se a tela for fechada no meio.
-  useEffect(() => () => abortRef.current?.abort(), []);
-
-  const start = async () => {
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setRunning(true);
-    try {
-      await runSync(db, setSteps, controller.signal);
-    } finally {
-      setRunning(false);
-      abortRef.current = null;
-      setSummary(await fetchSummary(db));
-    }
-  };
+  }, [db, finishedAt]);
 
   const lastSync = summary?.lastSyncAt ? new Date(summary.lastSyncAt).toLocaleString('pt-BR') : null;
 
@@ -55,7 +41,7 @@ export default function SyncScreen() {
           {lastSync ? `Última sincronização em ${lastSync}.` : 'Nenhuma sincronização ainda.'}
         </Text>
         <Pressable
-          onPress={running ? () => abortRef.current?.abort() : start}
+          onPress={running ? cancel : () => start(db)}
           style={({ pressed }) => [styles.button, running && styles.buttonCancel, pressed && styles.pressed]}
         >
           <Text style={[styles.buttonText, running && { color: colors.text }]}>

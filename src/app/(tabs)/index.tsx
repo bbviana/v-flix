@@ -1,13 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Link, router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PosterCard } from '@/components/poster-card';
 import { useFilters } from '@/explore/filters';
 import { loadHomeRows, type HomeRow } from '@/home/rows';
+import { useSync } from '@/sync/store';
 import { colors, radius, spacing, type } from '@/theme';
 
 const CARD_WIDTH = 116;
@@ -16,13 +17,16 @@ export default function HomeScreen() {
   const db = useSQLiteContext();
   const insets = useSafeAreaInsets();
   const [rows, setRows] = useState<HomeRow[] | null>(null);
+  const syncFinishedAt = useSync((s) => s.finishedAt);
 
-  // Recarrega ao voltar (sync ou mudança de gêneros nas configurações).
-  useFocusEffect(
-    useCallback(() => {
-      loadHomeRows(db).then(setRows);
-    }, [db]),
-  );
+  // Recarrega ao voltar (mudança de gêneros nas configurações) e quando uma sync termina.
+  const load = useCallback(() => {
+    loadHomeRows(db).then(setRows);
+  }, [db]);
+  useFocusEffect(load);
+  useEffect(() => {
+    if (syncFinishedAt) load();
+  }, [load, syncFinishedAt]);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>

@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Link, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { getMeta } from '@/db/helpers';
@@ -14,6 +14,7 @@ import {
   setServices,
 } from '@/db/settings';
 import { SERVICES } from '@/lib/services';
+import { overallProgress, useSync } from '@/sync/store';
 import { colors, radius, spacing, type } from '@/theme';
 
 type Genre = { id: number; name: string };
@@ -25,24 +26,30 @@ export default function SettingsScreen() {
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [hideWatched, setHideWatched] = useState(false);
   const [services, setServicesState] = useState<string[]>([]);
+  const syncing = useSync((s) => s.running);
+  const syncProgress = useSync((s) => Math.round(overallProgress(s.steps) * 100));
+  const syncFinishedAt = useSync((s) => s.finishedAt);
 
-  useFocusEffect(
-    useCallback(() => {
-      Promise.all([
-        db.getAllAsync<Genre>('SELECT id, name FROM genre ORDER BY name'),
-        getHomeGenres(db),
-        getMeta(db),
-        getHomeHideWatched(db),
-        getServices(db),
-      ]).then(([g, s, meta, hide, sv]) => {
-        setGenres(g);
-        setSelected(s);
-        setLastSync(meta.last_sync_at ?? null);
-        setHideWatched(hide);
-        setServicesState(sv);
-      });
-    }, [db]),
-  );
+  const load = useCallback(() => {
+    Promise.all([
+      db.getAllAsync<Genre>('SELECT id, name FROM genre ORDER BY name'),
+      getHomeGenres(db),
+      getMeta(db),
+      getHomeHideWatched(db),
+      getServices(db),
+    ]).then(([g, s, meta, hide, sv]) => {
+      setGenres(g);
+      setSelected(s);
+      setLastSync(meta.last_sync_at ?? null);
+      setHideWatched(hide);
+      setServicesState(sv);
+    });
+  }, [db]);
+  useFocusEffect(load);
+  // A data da última sync muda quando uma sync termina com a tela aberta.
+  useEffect(() => {
+    if (syncFinishedAt) load();
+  }, [load, syncFinishedAt]);
 
   // A ordem das fileiras segue a ordem em que os gêneros foram marcados.
   const toggle = (id: number) => {
@@ -52,9 +59,10 @@ export default function SettingsScreen() {
   };
 
   // Pelo menos um serviço fica marcado: sem nenhum, a sincronização não tem o que buscar.
+  // Durante a sync, a lista de serviços já foi lida; mudar agora deixaria o catálogo inconsistente.
   const toggleService = (label: string) => {
     const on = services.includes(label);
-    if (on && services.length === 1) return;
+    if (syncing || (on && services.length === 1)) return;
     const next = on ? services.filter((s) => s !== label) : [...services, label];
     setServicesState(next);
     setServices(db, next);
@@ -67,9 +75,13 @@ export default function SettingsScreen() {
           <Link href="/sync" asChild>
             <Pressable style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
               <Text style={styles.rowTitle}>Sincronização</Text>
-              <Text style={styles.rowDetail}>
-                {lastSync ? new Date(lastSync).toLocaleDateString('pt-BR') : 'Nunca'}
-              </Text>
+              {syncing ? (
+                <Text style={[styles.rowDetail, { color: colors.accent }]}>Sincronizando… {syncProgress}%</Text>
+              ) : (
+                <Text style={styles.rowDetail}>
+                  {lastSync ? new Date(lastSync).toLocaleDateString('pt-BR') : 'Nunca'}
+                </Text>
+              )}
               <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
             </Pressable>
           </Link>
@@ -83,10 +95,12 @@ export default function SettingsScreen() {
             <Pressable
               key={sv.label}
               onPress={() => toggleService(sv.label)}
+              disabled={syncing}
               style={({ pressed }) => [
                 styles.row,
                 i < SERVICES.length - 1 && styles.divider,
                 pressed && styles.rowPressed,
+                syncing && styles.rowDisabled,
               ]}
             >
               <Text style={styles.rowTitle}>{sv.label}</Text>
@@ -98,7 +112,9 @@ export default function SettingsScreen() {
           ))}
         </View>
         <Text style={styles.footnote}>
-          Desmarcar tira os filmes do serviço na hora. Os marcados entram na próxima sincronização.
+          {syncing
+            ? 'Os serviços podem ser alterados quando a sincronização terminar.'
+            : 'Desmarcar tira os filmes do serviço na hora. Os marcados entram na próxima sincronização.'}
         </Text>
       </View>
 
@@ -173,6 +189,7 @@ const styles = StyleSheet.create({
     minHeight: 46,
   },
   rowPressed: { backgroundColor: colors.surfaceAlt },
+  rowDisabled: { opacity: 0.4 },
   divider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator },
   rowTitle: { ...type.callout, color: colors.text, flex: 1 },
   rowDetail: { ...type.callout, color: colors.textSecondary },

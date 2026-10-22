@@ -130,7 +130,9 @@ const MIGRATIONS: Migration[] = [
 export const DATABASE_NAME = 'vflix.db';
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
-  await db.execAsync(`PRAGMA journal_mode = WAL; PRAGMA foreign_keys = OFF;`);
+  // busy_timeout: com a sync rodando em segundo plano no app, uma escrita do usuário
+  // (ex.: marcar como visto) espera o lote da sync terminar em vez de falhar.
+  await db.execAsync(`PRAGMA journal_mode = WAL; PRAGMA foreign_keys = OFF; PRAGMA busy_timeout = 10000;`);
   const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
   let version = row?.user_version ?? 0;
 
