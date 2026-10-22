@@ -127,6 +127,7 @@ export type PosterItem = {
   /** 1 = venceu, 0 = indicado, null = nenhum (Oscar de Melhor Filme) */
   oscar_won?: number | null;
   watched?: number;
+  in_list?: number;
   /** 0 = saiu de todos os catálogos (só acontece na Minha lista) */
   available?: number;
 };

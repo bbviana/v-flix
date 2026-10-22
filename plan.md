@@ -174,9 +174,16 @@ Ordem combinada depois do passo 8 (os números de feature referem-se a "Features
 6. ✅ Passo 10: **dump inicial embutido** (depois das mudanças de esquema acima, para não refazer o dump várias vezes).
 7. ✅ Feature 6: **ícone do app**.
 8. Feature 7: **filmes para locação** (aumenta o catálogo; regerar o dump depois).
-9. ✅ Passo 9: **build do APK** (`eas.json`; falta rodar `eas init` e o primeiro build).
+9. ✅ Passo 9: **build do APK** (`eas.json` e projeto vinculado ao EAS).
 
-Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 ✅ (**ocultar países**), feature 14 ✅ (**clima e temas**), feature 15 ✅ (**sync que continua ao sair da tela**) e feature 16 (**Minha lista com toque longo**).
+Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 ✅ (**ocultar países**), feature 14 ✅ (**clima e temas**), feature 15 ✅ (**sync que continua ao sair da tela**) e feature 16 ✅ (**Minha lista com toque longo**).
+
+## Versão 1 fechada (out/2026)
+
+A v1 termina com a feature 16. O que sobra é **v1.x**:
+
+- Feature 7: **filmes para locação** (regerar o dump depois).
+- Feature 12: **séries**, com a Crunchyroll.
 
 ## Verificações
 
@@ -274,7 +281,7 @@ Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 
     - Indicador discreto do progresso fora da tela (ex.: na linha "Sincronização" das Configurações); cancelar continua sendo um botão explícito.
     - Continua exigindo o app aberto e a tela ligada (keep-awake); sync em segundo plano segue fora do escopo.
 
-16. **Adicionar à Minha lista com toque longo no pôster.**
+16. ✅ **Adicionar à Minha lista com toque longo no pôster.** Feito: vibração (`performAndroidHapticsAsync`) e toast nativo do Android; pôster na lista ganha um selo de marcador no canto inferior direito. Junto, o selo de visto ficou mais visível (círculo verde sólido, maior) e tem prioridade sobre o de lista.
     - Em qualquer pôster (fileiras da Início, Explorar, recomendações do Detalhe), um toque longo põe ou tira o filme da Minha lista, sem abrir o Detalhe.
     - Feedback discreto: vibração leve (`expo-haptics`, incluído no Expo Go) e um aviso curto ("Adicionado à Minha lista" / "Removido da Minha lista"). Se marcar, o pôster pode ganhar um indicador, como o ✓ de visto.
     - Reaproveita `setInList` de `src/db/user-lists.ts`; a fileira "Minha lista" da Início recarrega ao voltar.

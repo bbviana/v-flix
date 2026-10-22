@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PosterCard } from '@/components/poster-card';
 import { useFilters } from '@/explore/filters';
+import { useListVersion } from '@/db/user-lists';
 import { loadHomeRows, type HomeRow } from '@/home/rows';
 import { useSync } from '@/sync/store';
 import { colors, radius, spacing, type } from '@/theme';
@@ -18,15 +19,17 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [rows, setRows] = useState<HomeRow[] | null>(null);
   const syncFinishedAt = useSync((s) => s.finishedAt);
+  const listVersion = useListVersion((s) => s.version);
 
-  // Recarrega ao voltar (mudança de gêneros nas configurações) e quando uma sync termina.
+  // Recarrega ao voltar (mudança de gêneros nas configurações), quando uma sync termina
+  // e quando a Minha lista muda por toque longo num pôster da própria Início.
   const load = useCallback(() => {
     loadHomeRows(db).then(setRows);
   }, [db]);
   useFocusEffect(load);
   useEffect(() => {
-    if (syncFinishedAt) load();
-  }, [load, syncFinishedAt]);
+    if (syncFinishedAt || listVersion) load();
+  }, [load, syncFinishedAt, listVersion]);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>

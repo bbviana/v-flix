@@ -1,4 +1,9 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
+import { create } from 'zustand';
+
+/** Muda a cada alteração na Minha lista, para telas abertas (Início) recarregarem. */
+export const useListVersion = create<{ version: number }>(() => ({ version: 0 }));
+const bumpListVersion = () => useListVersion.setState((s) => ({ version: s.version + 1 }));
 
 export type UserState = { watched: boolean; inList: boolean };
 
@@ -21,6 +26,7 @@ export async function setWatched(db: SQLiteDatabase, tmdbId: number, watched: bo
       await txn.runAsync('DELETE FROM watched WHERE tmdb_id = ?', tmdbId);
     }
   });
+  bumpListVersion();
 }
 
 export async function setInList(db: SQLiteDatabase, tmdbId: number, inList: boolean) {
@@ -29,4 +35,5 @@ export async function setInList(db: SQLiteDatabase, tmdbId: number, inList: bool
   } else {
     await db.runAsync('DELETE FROM watchlist WHERE tmdb_id = ?', tmdbId);
   }
+  bumpListVersion();
 }
