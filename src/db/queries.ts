@@ -121,3 +121,25 @@ export type PosterItem = {
   /** 0 = saiu de todos os catálogos (só acontece na Minha lista) */
   available?: number;
 };
+
+export type CountryCount = { iso: string; name: string; count: number };
+
+/** Países do catálogo, mais frequentes primeiro, e quantos filmes não têm país (Configurações). */
+export async function getCatalogCountries(db: SQLiteDatabase) {
+  const inCatalog = 'EXISTS (SELECT 1 FROM movie_provider mp WHERE mp.tmdb_id = m.tmdb_id)';
+  const [countries, noCountry] = await Promise.all([
+    db.getAllAsync<CountryCount>(
+      `SELECT mc.iso, COALESCE(c.name, mc.iso) AS name, COUNT(*) AS count
+       FROM movie_country mc
+       JOIN movie m ON m.tmdb_id = mc.tmdb_id
+       LEFT JOIN country c ON c.iso = mc.iso
+       WHERE ${inCatalog}
+       GROUP BY mc.iso ORDER BY count DESC, name`,
+    ),
+    db.getFirstAsync<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM movie m
+       WHERE ${inCatalog} AND NOT EXISTS (SELECT 1 FROM movie_country mc WHERE mc.tmdb_id = m.tmdb_id)`,
+    ),
+  ]);
+  return { countries, noCountry: noCountry?.n ?? 0 };
+}

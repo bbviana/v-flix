@@ -1,6 +1,7 @@
 import type { SQLiteBindValue, SQLiteDatabase } from 'expo-sqlite';
 
 import type { PosterItem } from '@/db/queries';
+import { visibleByCountry } from '@/db/settings';
 import { normalize } from '@/lib/search';
 
 import type { Filters } from './filters';
@@ -10,16 +11,21 @@ const placeholders = (n: number) => Array.from({ length: n }, () => '?').join(',
 const AVAILABLE = 'EXISTS (SELECT 1 FROM movie_provider mp WHERE mp.tmdb_id = m.tmdb_id)';
 const WATCHED = 'EXISTS (SELECT 1 FROM watched w WHERE w.tmdb_id = m.tmdb_id)';
 
-/** Transforma os filtros em WHERE + parâmetros. Cada filtro é um AND; listas são OR internamente. */
-export function buildWhere(f: Filters) {
+/**
+ * Transforma os filtros em WHERE + parâmetros. Cada filtro é um AND; listas são OR internamente.
+ * `includeHidden` ignora os países ocultos nas Configurações (para contar quantos foram ocultados).
+ */
+export function buildWhere(f: Filters, { includeHidden = false } = {}) {
   const where: string[] = [];
   const params: SQLiteBindValue[] = [];
 
   if (f.inList) {
-    // A Minha lista mostra também filmes que saíram do catálogo (marcados como indisponíveis).
+    // A Minha lista mostra também filmes que saíram do catálogo (marcados como indisponíveis)
+    // e não esconde países: o que foi posto lá é escolha explícita.
     where.push('EXISTS (SELECT 1 FROM watchlist wl WHERE wl.tmdb_id = m.tmdb_id)');
   } else {
     where.push(AVAILABLE);
+    if (!includeHidden) where.push(visibleByCountry('m'));
   }
 
   const words = normalize(f.query).split(/\s+/).filter(Boolean);
@@ -108,17 +114,23 @@ export async function getRecommendations(db: SQLiteDatabase, tmdbId: number, lim
      FROM movie_recommendation rec
      JOIN movie m ON m.tmdb_id = rec.recommended_id
      LEFT JOIN imdb_rating r ON r.imdb_id = m.imdb_id
-     WHERE rec.tmdb_id = ? AND ${AVAILABLE}
+     WHERE rec.tmdb_id = ? AND ${AVAILABLE} AND ${visibleByCountry('m')}
      ORDER BY rec.rank
      LIMIT ?`,
     [tmdbId, limit],
   );
 }
 
-export async function exploreCount(db: SQLiteDatabase, f: Filters) {
-  const { where, params } = buildWhere(f);
+export async function exploreCount(db: SQLiteDatabase, f: Filters, opts?: { includeHidden?: boolean }) {
+  const { where, params } = buildWhere(f, opts);
   const row = await db.getFirstAsync<{ n: number }>(`SELECT COUNT(*) AS n ${FROM} WHERE ${where}`, params);
   return row?.n ?? 0;
+}
+
+/** Quantos filmes destes filtros os países ocultos estão escondendo. */
+export async function exploreHiddenCount(db: SQLiteDatabase, f: Filters, visible: number) {
+  if (f.inList) return 0;
+  return (await exploreCount(db, f, { includeHidden: true })) - visible;
 }
 
 export type FilterOptions = {
@@ -130,7 +142,7 @@ export type FilterOptions = {
 
 /** Opções dos filtros, só com valores que existem no catálogo. */
 export async function getFilterOptions(db: SQLiteDatabase): Promise<FilterOptions> {
-  const inCatalog = 'EXISTS (SELECT 1 FROM movie_provider mp WHERE mp.tmdb_id = x.tmdb_id)';
+  const inCatalog = `EXISTS (SELECT 1 FROM movie_provider mp WHERE mp.tmdb_id = x.tmdb_id) AND ${visibleByCountry('x')}`;
   const [providers, genres, countries, decades] = await Promise.all([
     db.getAllAsync<{ id: number; name: string }>('SELECT id, name FROM provider ORDER BY name'),
     db.getAllAsync<{ id: number; name: string }>(

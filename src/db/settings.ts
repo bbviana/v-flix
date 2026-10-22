@@ -38,3 +38,28 @@ export async function setServices(db: SQLiteDatabase, labels: string[]) {
     await txn.runAsync(`DELETE FROM provider WHERE name NOT IN (${keep})`, labels);
   });
 }
+
+/** Países ocultos (ISO): some o filme cujos países de produção estão todos na lista. */
+export const getHiddenCountries = (db: SQLiteDatabase) => getSetting<string[]>(db, 'hidden_countries', []);
+export const setHiddenCountries = (db: SQLiteDatabase, isos: string[]) => setSetting(db, 'hidden_countries', isos);
+
+/** Oculta também os filmes sem país de produção cadastrado. */
+export const getHideNoCountry = (db: SQLiteDatabase) => getSetting(db, 'hide_no_country', false);
+export const setHideNoCountry = (db: SQLiteDatabase, value: boolean) => setSetting(db, 'hide_no_country', value);
+
+/**
+ * Condição SQL "o filme não está oculto pelos países", lendo as configurações direto
+ * de app_setting: vale em qualquer consulta sem precisar carregá-las antes.
+ * Aparece quem tem algum país fora da lista (coproduções como 1917, em que a Índia
+ * só participa, continuam), ou quem não tem país, se "Sem país" não estiver marcado.
+ */
+export const visibleByCountry = (alias: string) => `(
+  EXISTS (
+    SELECT 1 FROM movie_country vc WHERE vc.tmdb_id = ${alias}.tmdb_id
+      AND vc.iso NOT IN (SELECT value FROM json_each(COALESCE((SELECT value FROM app_setting WHERE key = 'hidden_countries'), '[]')))
+  )
+  OR (
+    NOT EXISTS (SELECT 1 FROM movie_country vc WHERE vc.tmdb_id = ${alias}.tmdb_id)
+    AND COALESCE((SELECT value FROM app_setting WHERE key = 'hide_no_country'), 'false') <> 'true'
+  )
+)`;

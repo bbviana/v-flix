@@ -176,7 +176,7 @@ Ordem combinada depois do passo 8 (os números de feature referem-se a "Features
 8. Feature 7: **filmes para locação** (aumenta o catálogo; regerar o dump depois).
 9. Passo 9: **build do APK** (`eas.json`).
 
-Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 (**ocultar países**), feature 14 (**clima e temas**) e feature 15 ✅ (**sync que continua ao sair da tela**).
+Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 ✅ (**ocultar países**), feature 14 (**clima e temas**) e feature 15 ✅ (**sync que continua ao sair da tela**).
 
 ## Verificações
 
@@ -255,7 +255,7 @@ Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 
     - UI: alternar Filmes / Séries no Explorar e fileiras próprias na Início. Prêmios: o Oscar não se aplica (Emmy ficaria para depois).
     - **Crunchyroll entra junto com séries:** o catálogo dela é quase todo de séries de anime (só 153 filmes no BR, medido em out/2026), então só vale a pena com suporte a séries.
 
-13. **Ocultar filmes de países escolhidos.**
+13. ✅ **Ocultar filmes de países escolhidos.**
     - Motivação: muitos filmes indianos geram ruído. Nova seção nas Configurações, "Países ocultos", com a lista de países do catálogo (mais frequentes primeiro) para marcar.
     - **Regra: ocultar só se todos os países de produção do filme estiverem na lista.** Medido em out/2026: 1.114 filmes têm a Índia, 1.046 são só indianos. Os outros 68 são coproduções como *1917*, *Pixels* e *The Post*, em que a Índia aparece por participação de empresas indianas; com a regra "algum país", eles sumiriam indevidamente.
     - **Opção "Sem país"** na mesma lista: marcada, oculta também os filmes sem país de produção cadastrado (744 no catálogo em out/2026).

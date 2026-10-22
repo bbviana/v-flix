@@ -5,19 +5,28 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { getMeta } from '@/db/helpers';
+import { getCatalogCountries, type CountryCount } from '@/db/queries';
 import {
+  getHiddenCountries,
+  getHideNoCountry,
   getHomeGenres,
   getHomeHideWatched,
   getServices,
   setHomeGenres,
+  setHiddenCountries,
+  setHideNoCountry,
   setHomeHideWatched,
   setServices,
 } from '@/db/settings';
+import { flagEmoji } from '@/lib/format';
 import { SERVICES } from '@/lib/services';
 import { overallProgress, useSync } from '@/sync/store';
 import { colors, radius, spacing, type } from '@/theme';
 
 type Genre = { id: number; name: string };
+
+/** Países mostrados antes de "Mostrar todos" (os marcados aparecem sempre). */
+const TOP_COUNTRIES = 10;
 
 export default function SettingsScreen() {
   const db = useSQLiteContext();
@@ -26,6 +35,11 @@ export default function SettingsScreen() {
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [hideWatched, setHideWatched] = useState(false);
   const [services, setServicesState] = useState<string[]>([]);
+  const [countries, setCountries] = useState<CountryCount[]>([]);
+  const [noCountryCount, setNoCountryCount] = useState(0);
+  const [hiddenCountries, setHiddenCountriesState] = useState<string[]>([]);
+  const [hideNoCountry, setHideNoCountryState] = useState(false);
+  const [showAllCountries, setShowAllCountries] = useState(false);
   const syncing = useSync((s) => s.running);
   const syncProgress = useSync((s) => Math.round(overallProgress(s.steps) * 100));
   const syncFinishedAt = useSync((s) => s.finishedAt);
@@ -37,12 +51,19 @@ export default function SettingsScreen() {
       getMeta(db),
       getHomeHideWatched(db),
       getServices(db),
-    ]).then(([g, s, meta, hide, sv]) => {
+      getCatalogCountries(db),
+      getHiddenCountries(db),
+      getHideNoCountry(db),
+    ]).then(([g, s, meta, hide, sv, cc, hc, hnc]) => {
       setGenres(g);
       setSelected(s);
       setLastSync(meta.last_sync_at ?? null);
       setHideWatched(hide);
       setServicesState(sv);
+      setCountries(cc.countries);
+      setNoCountryCount(cc.noCountry);
+      setHiddenCountriesState(hc);
+      setHideNoCountryState(hnc);
     });
   }, [db]);
   useFocusEffect(load);
@@ -67,6 +88,19 @@ export default function SettingsScreen() {
     setServicesState(next);
     setServices(db, next);
   };
+
+  const toggleCountry = (iso: string) => {
+    const next = hiddenCountries.includes(iso) ? hiddenCountries.filter((c) => c !== iso) : [...hiddenCountries, iso];
+    setHiddenCountriesState(next);
+    setHiddenCountries(db, next);
+  };
+  const toggleNoCountry = () => {
+    setHideNoCountryState(!hideNoCountry);
+    setHideNoCountry(db, !hideNoCountry);
+  };
+  const visibleCountries = showAllCountries
+    ? countries
+    : countries.filter((c, i) => i < TOP_COUNTRIES || hiddenCountries.includes(c.iso));
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -165,7 +199,57 @@ export default function SettingsScreen() {
           </>
         )}
       </View>
+
+      {countries.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Países ocultos</Text>
+          <View style={styles.group}>
+            <CheckRow label="Sem país" detail={noCountryCount} on={hideNoCountry} onPress={toggleNoCountry} divider />
+            {visibleCountries.map((c, i) => (
+              <CheckRow
+                key={c.iso}
+                label={[flagEmoji(c.iso), c.name].filter(Boolean).join('  ')}
+                detail={c.count}
+                on={hiddenCountries.includes(c.iso)}
+                onPress={() => toggleCountry(c.iso)}
+                divider={i < visibleCountries.length - 1 || !showAllCountries}
+              />
+            ))}
+            {!showAllCountries && (
+              <Pressable
+                onPress={() => setShowAllCountries(true)}
+                style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+              >
+                <Text style={[styles.rowTitle, { color: colors.accent }]}>
+                  Mostrar todos os {countries.length} países
+                </Text>
+              </Pressable>
+            )}
+          </View>
+          <Text style={styles.footnote}>
+            Um filme só some se todos os seus países de produção estiverem marcados; coproduções continuam
+            aparecendo. A Minha lista não é afetada.
+          </Text>
+        </View>
+      )}
     </ScrollView>
+  );
+}
+
+type CheckRowProps = { label: string; detail: number; on: boolean; onPress: () => void; divider: boolean };
+
+function CheckRow({ label, detail, on, onPress, divider }: CheckRowProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.row, divider && styles.divider, pressed && styles.rowPressed]}
+    >
+      <Text style={styles.rowTitle} numberOfLines={1}>
+        {label}
+      </Text>
+      <Text style={styles.rowDetail}>{detail.toLocaleString('pt-BR')}</Text>
+      <View style={styles.check}>{on && <Ionicons name="checkmark" size={20} color={colors.accent} />}</View>
+    </Pressable>
   );
 }
 

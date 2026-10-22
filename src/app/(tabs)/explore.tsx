@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PosterCard } from '@/components/poster-card';
 import { activeFilterCount, DEFAULT_FILTERS, useFilters, useFilterValues, type SortBy } from '@/explore/filters';
-import { exploreCount, exploreMovies, type ExploreItem } from '@/explore/query';
+import { exploreCount, exploreHiddenCount, exploreMovies, type ExploreItem } from '@/explore/query';
 import { colors, radius, spacing, type } from '@/theme';
 
 const PAGE = 60;
@@ -43,6 +43,7 @@ export default function ExploreScreen() {
 
   const [items, setItems] = useState<ExploreItem[]>([]);
   const [total, setTotal] = useState<number | null>(null);
+  const [hidden, setHidden] = useState(0);
   const loadingMore = useRef(false);
   // Incrementado a cada nova consulta para descartar respostas atrasadas.
   const generation = useRef(0);
@@ -53,11 +54,14 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     const gen = ++generation.current;
-    Promise.all([exploreMovies(db, filters, PAGE, 0), exploreCount(db, filters)]).then(([rows, count]) => {
-      if (gen !== generation.current) return;
-      setItems(rows);
-      setTotal(count);
-    });
+    Promise.all([exploreMovies(db, filters, PAGE, 0), exploreCount(db, filters)])
+      .then(async ([rows, count]) => [rows, count, await exploreHiddenCount(db, filters, count)] as const)
+      .then(([rows, count, hiddenCount]) => {
+        if (gen !== generation.current) return;
+        setItems(rows);
+        setTotal(count);
+        setHidden(hiddenCount);
+      });
   }, [db, filters, refreshKey]);
 
   const loadMore = async () => {
@@ -110,6 +114,12 @@ export default function ExploreScreen() {
             </Pressable>
           </Link>
         </View>
+        {hidden > 0 && (
+          <Text style={styles.hiddenNote}>
+            {hidden.toLocaleString('pt-BR')} {hidden === 1 ? 'filme oculto' : 'filmes ocultos'} pelos países escolhidos
+            nas Configurações
+          </Text>
+        )}
       </View>
 
       <FlashList
@@ -159,6 +169,7 @@ const styles = StyleSheet.create({
   searchInput: { ...type.callout, flex: 1, color: colors.text, paddingVertical: 0 },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
   count: { ...type.footnote, color: colors.textSecondary, flex: 1 },
+  hiddenNote: { ...type.caption, fontWeight: '400', color: colors.textTertiary, marginTop: -spacing.xs },
   filterButton: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   filterText: { ...type.callout, color: colors.accent },
   badge: {
