@@ -55,7 +55,7 @@ export type MovieDetail = {
   oscar_year: number | null;
   oscar_won: number | null;
   genres: string[];
-  countries: string[];
+  countries: { iso: string; name: string }[];
   providers: { id: number; name: string; logo_path: string | null }[];
 };
 
@@ -77,8 +77,8 @@ export async function getMovieDetail(db: SQLiteDatabase, tmdbId: number): Promis
       'SELECT g.name FROM movie_genre mg JOIN genre g ON g.id = mg.genre_id WHERE mg.tmdb_id = ? ORDER BY g.name',
       tmdbId,
     ),
-    db.getAllAsync<{ name: string }>(
-      `SELECT COALESCE(c.name, mc.iso) AS name FROM movie_country mc
+    db.getAllAsync<{ iso: string; name: string }>(
+      `SELECT mc.iso, COALESCE(c.name, mc.iso) AS name FROM movie_country mc
        LEFT JOIN country c ON c.iso = mc.iso WHERE mc.tmdb_id = ? ORDER BY name`,
       tmdbId,
     ),
@@ -94,7 +94,7 @@ export async function getMovieDetail(db: SQLiteDatabase, tmdbId: number): Promis
     ...rest,
     cast: top_cast ? (JSON.parse(top_cast) as string[]) : [],
     genres: genres.map((g) => g.name),
-    countries: countries.map((c) => c.name),
+    countries,
     providers,
   };
 }

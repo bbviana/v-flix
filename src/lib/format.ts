@@ -17,3 +17,13 @@ export function formatVotes(votes: number) {
 /** 8.5 → "8,5", 9 → "9,0" */
 export const formatRating = (rating: number) =>
   rating.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+// Códigos históricos usados pela TMDB que não têm emoji de bandeira.
+const NO_FLAG = new Set(['SU', 'XC', 'XG', 'YU', 'CS', 'AN', 'ZR', 'BU', 'TP', 'DD']);
+
+/** "KR" → "🇰🇷"; null para códigos sem bandeira (ex.: União Soviética). */
+export function flagEmoji(iso: string) {
+  const code = iso.toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code) || NO_FLAG.has(code)) return null;
+  return String.fromCodePoint(...[...code].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+}

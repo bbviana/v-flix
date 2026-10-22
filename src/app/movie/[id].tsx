@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { posterUrl } from '@/api/tmdb';
 import { getMovieDetail, type MovieDetail } from '@/db/queries';
-import { formatRating, formatRuntime, formatVotes } from '@/lib/format';
+import { flagEmoji, formatRating, formatRuntime, formatVotes } from '@/lib/format';
 import { colors, radius, spacing, type } from '@/theme';
 
 export default function MovieScreen() {
@@ -70,7 +70,6 @@ function MovieBody({ movie }: { movie: MovieDetail }) {
   if (movie.director) facts.push(['Direção', movie.director]);
   if (movie.cast.length) facts.push(['Elenco', movie.cast.join(', ')]);
   if (movie.genres.length) facts.push(['Gênero', movie.genres.join(', ')]);
-  if (movie.countries.length) facts.push([movie.countries.length > 1 ? 'Países' : 'País', movie.countries.join(', ')]);
   if (showOriginal) facts.push(['Título original', movie.original_title!]);
 
   return (
@@ -81,6 +80,11 @@ function MovieBody({ movie }: { movie: MovieDetail }) {
           {!!meta && <Text style={styles.meta}>{meta}</Text>}
           {movie.certification_br && <Text style={styles.cert}>{movie.certification_br}</Text>}
         </View>
+        {movie.countries.length > 0 && (
+          <Text style={styles.meta}>
+            {movie.countries.map((c) => [flagEmoji(c.iso), c.name].filter(Boolean).join(' ')).join('  ·  ')}
+          </Text>
+        )}
       </View>
 
       {(movie.rating !== null || movie.oscar_won !== null) && (

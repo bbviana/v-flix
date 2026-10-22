@@ -14,6 +14,16 @@ const WANTED: { label: string; names: string[] }[] = [
   { label: 'HBO Max', names: ['HBO Max', 'Max'] },
 ];
 
+// Países históricos que a TMDB não traduz.
+const COUNTRY_NAMES_PT: Record<string, string> = {
+  SU: 'União Soviética',
+  XC: 'Tchecoslováquia',
+  XG: 'Alemanha Oriental',
+  YU: 'Iugoslávia',
+  CS: 'Sérvia e Montenegro',
+  AN: 'Antilhas Holandesas',
+};
+
 export const providersStep: SyncStep = {
   id: 'providers',
   title: 'Provedores, gêneros e países',
@@ -55,7 +65,7 @@ export const providersStep: SyncStep = {
         txn,
         'country',
         ['iso', 'name'],
-        countries.map((c) => [c.iso_3166_1, c.native_name || c.english_name]),
+        countries.map((c) => [c.iso_3166_1, COUNTRY_NAMES_PT[c.iso_3166_1] ?? (c.native_name || c.english_name)]),
         { verb: 'INSERT OR REPLACE' },
       );
     });
