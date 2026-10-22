@@ -169,7 +169,7 @@ Ordem combinada depois do passo 8 (os números de feature referem-se a "Features
 1. ✅ Features 1 e 8 juntas: **marcar como visto** e **Minha lista** (mesmas tabelas do usuário, botões no Detalhe e filtros no Explorar).
 2. ✅ Feature 2: **mais categorias do Oscar** (Filme Internacional; verificar Roteiro).
 3. ✅ Feature 9: **orçamento e bilheteria**.
-4. Feature 10: **recomendações**.
+4. ✅ Feature 10: **recomendações**.
 5. Feature 11: **escolher os serviços de streaming**.
 6. Passo 10: **dump inicial embutido** (depois das mudanças de esquema acima, para não refazer o dump várias vezes).
 7. Feature 6: **ícone do app**.
@@ -236,7 +236,7 @@ Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 
    - `budget` e `revenue` já vêm na resposta de `/movie/{id}` que baixamos; basta guardar (novas colunas em `movie`) e exibir na ficha técnica ("Orçamento US$ 11 mi · Bilheteria US$ 258 mi").
    - A TMDB usa `0` para desconhecido: nesse caso, omitir.
    - Filmes já sincronizados precisam rebuscar detalhes para preencher (ou aceitar que só os novos terão o dado até um refresh).
-10. **Recomendações ("Se gostou, veja também").**
+10. ✅ **Recomendações ("Se gostou, veja também").**
     - Acrescentar `recommendations` ao `append_to_response` dos detalhes (mesma chamada, payload maior). Guardar a relação numa tabela `movie_recommendation (tmdb_id, recommended_id, rank)`.
     - No Detalhe, uma fileira com as recomendações **que estão no catálogo** (as de fora não são assistíveis).
     - Combina com a "Minha lista" (item 8): adicionar direto da fileira.

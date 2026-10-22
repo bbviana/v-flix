@@ -5,12 +5,14 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import type { ComponentProps } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { posterUrl } from '@/api/tmdb';
-import { getMovieDetail, type MovieDetail } from '@/db/queries';
+import { PosterCard } from '@/components/poster-card';
+import { getMovieDetail, type MovieDetail, type PosterItem } from '@/db/queries';
 import { getUserState, setInList, setWatched, type UserState } from '@/db/user-lists';
+import { getRecommendations } from '@/explore/query';
 import { flagEmoji, formatMoney, formatRating, formatRuntime, formatVotes } from '@/lib/format';
 import { oscarLabel } from '@/lib/oscar';
 import { colors, radius, spacing, type } from '@/theme';
@@ -121,6 +123,36 @@ function ActionButton({ icon, label, active, onPress }: ActionButtonProps) {
         {label}
       </Text>
     </Pressable>
+  );
+}
+
+const RECOMMENDATION_WIDTH = 104;
+
+/** Recomendações da TMDB que estão nos seus serviços; some quando não há nenhuma. */
+function Recommendations({ tmdbId }: { tmdbId: number }) {
+  const db = useSQLiteContext();
+  const [movies, setMovies] = useState<PosterItem[]>([]);
+
+  useEffect(() => {
+    getRecommendations(db, tmdbId).then(setMovies);
+  }, [db, tmdbId]);
+
+  if (!movies.length) return null;
+
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionLabel}>Se gostou, veja também</Text>
+      <FlatList
+        horizontal
+        data={movies}
+        keyExtractor={(m) => String(m.tmdb_id)}
+        renderItem={({ item }) => <PosterCard movie={item} width={RECOMMENDATION_WIDTH} />}
+        style={styles.recommendations}
+        contentContainerStyle={styles.recommendationsContent}
+        showsHorizontalScrollIndicator={false}
+        initialNumToRender={4}
+      />
+    </View>
   );
 }
 
@@ -245,6 +277,8 @@ function MovieBody({ movie }: { movie: MovieDetail }) {
         </View>
       )}
 
+      <Recommendations tmdbId={movie.tmdb_id} />
+
       <Text style={styles.credits}>
         Dados de disponibilidade: JustWatch.{'\n'}
         Este produto usa a API da TMDB, mas não é endossado nem certificado pela TMDB.
@@ -323,5 +357,8 @@ const styles = StyleSheet.create({
   },
   factLabel: { ...type.subhead, color: colors.textTertiary, width: 104 },
   factValue: { ...type.subhead, color: colors.text, flex: 1 },
+  // A fileira vai de borda a borda, alinhando o primeiro pôster com o texto.
+  recommendations: { marginHorizontal: -spacing.xl },
+  recommendationsContent: { paddingHorizontal: spacing.xl, gap: spacing.sm },
   credits: { ...type.caption, fontWeight: '400', color: colors.textTertiary, lineHeight: 16 },
 });

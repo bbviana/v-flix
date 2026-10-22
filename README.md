@@ -59,7 +59,7 @@ Código que não é tela fica fora de `src/app/`.
 
 ### Banco de dados
 
-Tabelas principais: `movie`, `provider`, `genre`, `country`, as tabelas de ligação `movie_genre`, `movie_country` e `movie_provider`, além de `imdb_rating`, `oscar_award`, `watched`, `watchlist`, `app_setting` e `sync_meta` (data e contagens da última sync).
+Tabelas principais: `movie`, `provider`, `genre`, `country`, as tabelas de ligação `movie_genre`, `movie_country`, `movie_provider` e `movie_recommendation`, além de `imdb_rating`, `oscar_award`, `watched`, `watchlist`, `app_setting` e `sync_meta` (data e contagens da última sync).
 
 Para mudar o esquema, **acrescente** uma nova entrada ao fim do array `MIGRATIONS` em `src/db/migrations.ts`. Nunca edite uma migração que já foi aplicada.
 

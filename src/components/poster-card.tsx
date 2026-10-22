@@ -15,7 +15,8 @@ export function PosterCard({ movie, width }: Props) {
   const unavailable = movie.available === 0;
 
   return (
-    <Link href={{ pathname: '/movie/[id]', params: { id: movie.tmdb_id } }} asChild>
+    // push: do Detalhe para outro Detalhe (recomendações) empilha em vez de trocar a tela.
+    <Link href={{ pathname: '/movie/[id]', params: { id: movie.tmdb_id } }} push asChild>
       <Pressable style={({ pressed }) => [{ width }, pressed && styles.pressed]}>
         <View style={[styles.frame, { width, height: width * 1.5 }]}>
           {movie.poster_path ? (

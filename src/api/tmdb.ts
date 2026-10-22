@@ -77,6 +77,7 @@ export type TmdbMovieDetails = {
   genres: TmdbGenre[];
   production_countries: { iso_3166_1: string; name: string }[];
   external_ids?: { imdb_id: string | null };
+  recommendations?: { results: { id: number }[] };
   credits?: {
     cast: { name: string; order: number }[];
     crew: { name: string; job: string }[];

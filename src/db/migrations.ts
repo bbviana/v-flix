@@ -102,6 +102,17 @@ const MIGRATIONS: Migration[] = [
   ALTER TABLE movie ADD COLUMN revenue INTEGER;
   UPDATE movie SET details_fetched_at = NULL;
   `,
+  // v7: recomendações da TMDB ("Se gostou, veja também"). O recomendado pode não estar
+  // no catálogo (nem na tabela movie); a tela filtra. Também exige rebuscar os detalhes.
+  `
+  CREATE TABLE movie_recommendation (
+    tmdb_id INTEGER NOT NULL,
+    recommended_id INTEGER NOT NULL,
+    rank INTEGER NOT NULL,
+    PRIMARY KEY (tmdb_id, recommended_id)
+  );
+  UPDATE movie SET details_fetched_at = NULL;
+  `,
 ];
 
 export const DATABASE_NAME = 'vflix.db';

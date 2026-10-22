@@ -101,6 +101,20 @@ export async function exploreMovies(db: SQLiteDatabase, f: Filters, limit: numbe
   );
 }
 
+/** "Se gostou, veja também": recomendações da TMDB que estão em algum serviço, na ordem da TMDB. */
+export async function getRecommendations(db: SQLiteDatabase, tmdbId: number, limit = 20) {
+  return db.getAllAsync<PosterItem>(
+    `SELECT m.tmdb_id, m.title, m.poster_path, r.rating, ${OSCAR_STATUS} AS oscar_won, ${WATCHED} AS watched
+     FROM movie_recommendation rec
+     JOIN movie m ON m.tmdb_id = rec.recommended_id
+     LEFT JOIN imdb_rating r ON r.imdb_id = m.imdb_id
+     WHERE rec.tmdb_id = ? AND ${AVAILABLE}
+     ORDER BY rec.rank
+     LIMIT ?`,
+    [tmdbId, limit],
+  );
+}
+
 export async function exploreCount(db: SQLiteDatabase, f: Filters) {
   const { where, params } = buildWhere(f);
   const row = await db.getFirstAsync<{ n: number }>(`SELECT COUNT(*) AS n ${FROM} WHERE ${where}`, params);
