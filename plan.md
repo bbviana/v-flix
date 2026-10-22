@@ -181,12 +181,12 @@ Uma tela mostra o progresso de cada etapa (texto e barra) e mantém a tela ligad
    - **Melhor Filme Internacional** (antes "em Língua Estrangeira"), `Q105304`. **Viável, já verificado** com a mesma consulta usada para Melhor Filme: 342 filmes, 71 vencedores, todos os anos de 1957 a 2026 cobertos (22 no catálogo atual, como Roma, Parasita e Zona de Interesse). O prêmio é oficialmente do país, mas no Wikidata está ligado ao filme.
    - **Melhor Roteiro Original** (`Q41417`) **e Adaptado** (`Q107258`). **Viabilidade a verificar.** Risco: esses prêmios costumam ser atribuídos aos **roteiristas** (pessoas), não ao filme, então a consulta via P166/P1411 no filme pode trazer pouca coisa. Checar a cobertura comparando com a lista real de vencedores, e investigar o qualificador "for work" (P1686) nas declarações dos roteiristas como alternativa.
    - Uma única consulta SPARQL pode trazer todas as categorias (`VALUES ?premio { wd:Q102427 wd:Q105304 ... }`).
-3. **Ícone do Oscar nos pôsteres.**
+3. **Ícone do Oscar nos pôsteres.** ✅ Feito no passo 8 (só Melhor Filme por enquanto).
    - Vencedores: ícone de troféu **preenchido** sobre o pôster (em grades e fileiras).
    - Indicados não vencedores: o mesmo ícone, **só o contorno**.
    - Com várias categorias, o ícone reflete a melhor situação do filme (venceu alguma > indicado a alguma); o detalhe por categoria fica na tela do filme.
    - Discreto, num canto do pôster, seguindo a diretriz visual clean.
-4. **Nota IMDb no card do filme.**
+4. **Nota IMDb no card do filme.** ✅ Feito no passo 8.
    - Mostrar a nota (ex.: "8,5") nos pôsteres das grades e fileiras. Filmes sem nota não mostram nada.
    - Desenhar junto com o ícone do Oscar (item 3), para os dois não competirem: por exemplo, a nota num canto inferior e o troféu no superior, em selos pequenos e semitransparentes que não cubram o pôster.
    - A consulta do Explorar já traz `rating`; falta incluir nas fileiras da Início e no `PosterCard`.
