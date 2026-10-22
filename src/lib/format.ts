@@ -14,6 +14,14 @@ export function formatVotes(votes: number) {
   return String(votes);
 }
 
+/** 11_000_000 → "US$ 11 mi", 2_500_000 → "US$ 2,5 mi", 1_234_000_000 → "US$ 1,2 bi" */
+export function formatMoney(usd: number) {
+  const fmt = (n: number) => n.toLocaleString('pt-BR', { maximumFractionDigits: n < 10 ? 1 : 0 });
+  if (usd >= 1_000_000_000) return `US$ ${fmt(usd / 1_000_000_000)} bi`;
+  if (usd >= 1_000_000) return `US$ ${fmt(usd / 1_000_000)} mi`;
+  return `US$ ${Math.round(usd / 1_000)} mil`;
+}
+
 /** 8.5 → "8,5", 9 → "9,0" */
 export const formatRating = (rating: number) =>
   rating.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });

@@ -52,6 +52,8 @@ export type MovieDetail = {
   certification_br: string | null;
   director: string | null;
   cast: string[];
+  budget: number | null;
+  revenue: number | null;
   rating: number | null;
   votes: number | null;
   oscars: { category: string; year: number | null; won: number }[];
@@ -64,6 +66,7 @@ export async function getMovieDetail(db: SQLiteDatabase, tmdbId: number): Promis
   const movie = await db.getFirstAsync<Omit<MovieDetail, 'cast' | 'genres' | 'countries' | 'providers' | 'oscars'> & { top_cast: string | null }>(
     `SELECT m.tmdb_id, m.imdb_id, m.title, m.original_title, m.overview, m.year, m.runtime,
             m.poster_path, m.backdrop_path, m.certification_br, m.director, m.top_cast,
+            m.budget, m.revenue,
             r.rating, r.votes
      FROM movie m
      LEFT JOIN imdb_rating r ON r.imdb_id = m.imdb_id

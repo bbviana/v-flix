@@ -168,7 +168,7 @@ Ordem combinada depois do passo 8 (os números de feature referem-se a "Features
 
 1. ✅ Features 1 e 8 juntas: **marcar como visto** e **Minha lista** (mesmas tabelas do usuário, botões no Detalhe e filtros no Explorar).
 2. ✅ Feature 2: **mais categorias do Oscar** (Filme Internacional; verificar Roteiro).
-3. Feature 9: **orçamento e bilheteria**.
+3. ✅ Feature 9: **orçamento e bilheteria**.
 4. Feature 10: **recomendações**.
 5. Feature 11: **escolher os serviços de streaming**.
 6. Passo 10: **dump inicial embutido** (depois das mudanças de esquema acima, para não refazer o dump várias vezes).
@@ -232,7 +232,7 @@ Sem posição definida: feature 12 (**séries**, com a Crunchyroll), feature 13 
    - Filme que sai de todos os catálogos continua na lista, marcado como indisponível, em vez de sumir.
    - Integração com o item 1: ao marcar um filme como visto, oferecer tirá-lo da lista (ou tirar automaticamente).
 
-9. **Orçamento e bilheteria no Detalhe.**
+9. ✅ **Orçamento e bilheteria no Detalhe.**
    - `budget` e `revenue` já vêm na resposta de `/movie/{id}` que baixamos; basta guardar (novas colunas em `movie`) e exibir na ficha técnica ("Orçamento US$ 11 mi · Bilheteria US$ 258 mi").
    - A TMDB usa `0` para desconhecido: nesse caso, omitir.
    - Filmes já sincronizados precisam rebuscar detalhes para preencher (ou aceitar que só os novos terão o dado até um refresh).

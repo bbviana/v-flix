@@ -1,6 +1,6 @@
 # v-flix
 
-App Android pessoal, estilo Netflix, que reúne num só lugar os **filmes** disponíveis por assinatura no **Brasil** em **Netflix, Prime Video, Disney+ e HBO Max**. Cada filme vem com a **nota do IMDb** e a informação de **Oscar de Melhor Filme** (indicado/vencedor), e pode ser filtrado por gênero, país, serviço, nota, votos, ano e Oscar.
+App Android pessoal, estilo Netflix, que reúne num só lugar os **filmes** disponíveis por assinatura no **Brasil** em **Netflix, Prime Video, Disney+ e HBO Max**. Cada filme vem com a **nota do IMDb** e o **Oscar** (Melhor Filme, Filme Internacional e Roteiro, indicado/vencedor), orçamento e bilheteria, e pode ser filtrado por gênero, país, serviço, nota, votos, ano e Oscar.
 
 Não há backend: o próprio celular baixa os dados, cruza as fontes e guarda tudo num SQLite local. O plano completo está em [`plan.md`](plan.md).
 
@@ -15,7 +15,7 @@ Não há backend: o próprio celular baixa os dados, cruza as fontes e guarda tu
  │ 2. Disponibilidade ────────────── TMDB /discover (por serviço, fatiado por data se > 10k)  │
  │ 3. Detalhes (incremental) ─────── TMDB /movie/{id} (só filmes novos, 8 em paralelo)        │
  │ 4. Notas IMDb ─────────────────── datasets.imdbws.com/title.ratings.tsv.gz (streaming)     │
- │ 5. Oscar de Melhor Filme ──────── Wikidata SPARQL (no máximo a cada 30 dias)               │
+ │ 5. Oscar (4 categorias) ──────── Wikidata SPARQL (no máximo a cada 30 dias)               │
  └────────────────────────────────────────────┬──────────────────────────────────────────────┘
                                               ▼
                                      SQLite local (vflix.db)
@@ -59,7 +59,7 @@ Código que não é tela fica fora de `src/app/`.
 
 ### Banco de dados
 
-Tabelas principais: `movie`, `provider`, `genre`, `country`, as tabelas de ligação `movie_genre`, `movie_country` e `movie_provider`, além de `imdb_rating`, `oscar_best_picture` e `sync_meta` (data e contagens da última sync).
+Tabelas principais: `movie`, `provider`, `genre`, `country`, as tabelas de ligação `movie_genre`, `movie_country` e `movie_provider`, além de `imdb_rating`, `oscar_award`, `watched`, `watchlist`, `app_setting` e `sync_meta` (data e contagens da última sync).
 
 Para mudar o esquema, **acrescente** uma nova entrada ao fim do array `MIGRATIONS` em `src/db/migrations.ts`. Nunca edite uma migração que já foi aplicada.
 

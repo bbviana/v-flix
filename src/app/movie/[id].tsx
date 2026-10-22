@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { posterUrl } from '@/api/tmdb';
 import { getMovieDetail, type MovieDetail } from '@/db/queries';
 import { getUserState, setInList, setWatched, type UserState } from '@/db/user-lists';
-import { flagEmoji, formatRating, formatRuntime, formatVotes } from '@/lib/format';
+import { flagEmoji, formatMoney, formatRating, formatRuntime, formatVotes } from '@/lib/format';
 import { oscarLabel } from '@/lib/oscar';
 import { colors, radius, spacing, type } from '@/theme';
 
@@ -157,6 +157,12 @@ function MovieBody({ movie }: { movie: MovieDetail }) {
   if (movie.director) facts.push(['Direção', movie.director]);
   if (movie.cast.length) facts.push(['Elenco', movie.cast.join(', ')]);
   if (movie.genres.length) facts.push(['Gênero', movie.genres.join(', ')]);
+  if (movie.budget) facts.push(['Orçamento', formatMoney(movie.budget)]);
+  // Filmes de streaming com estreia simbólica nos cinemas (ex.: US$ 5 mil para um
+  // orçamento de US$ 60 mi) informam bilheterias que mais confundem do que ajudam.
+  if (movie.revenue && !(movie.budget && movie.revenue < movie.budget / 100)) {
+    facts.push(['Bilheteria', formatMoney(movie.revenue)]);
+  }
   if (showOriginal) facts.push(['Título original', movie.original_title!]);
 
   return (

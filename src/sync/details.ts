@@ -26,6 +26,9 @@ function certificationBrOf(d: TmdbMovieDetails) {
   return br?.release_dates.map((r) => r.certification.trim()).find(Boolean) ?? null;
 }
 
+/** A TMDB usa 0 para desconhecido; valores minúsculos (ex.: 1, 25) são erros de cadastro. */
+const money = (v: number | undefined) => (v && v >= 1000 ? v : null);
+
 async function fetchDetails(id: number, signal: AbortSignal): Promise<Fetched> {
   try {
     const details = await tmdbGet<TmdbMovieDetails>(
@@ -82,7 +85,7 @@ export const detailsStep: SyncStep = {
             `UPDATE movie SET
                imdb_id = ?, title = ?, original_title = ?, search_text = ?, overview = ?, release_date = ?, year = ?,
                runtime = ?, original_language = ?, poster_path = ?, backdrop_path = ?, popularity = ?,
-               certification_br = ?, director = ?, top_cast = ?, details_fetched_at = ?
+               certification_br = ?, director = ?, top_cast = ?, budget = ?, revenue = ?, details_fetched_at = ?
              WHERE tmdb_id = ?`,
             [
               d.imdb_id || d.external_ids?.imdb_id || null,
@@ -100,6 +103,8 @@ export const detailsStep: SyncStep = {
               certificationBrOf(d),
               directorOf(d),
               topCastOf(d),
+              money(d.budget),
+              money(d.revenue),
               now,
               id,
             ],

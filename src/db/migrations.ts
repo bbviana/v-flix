@@ -95,6 +95,13 @@ const MIGRATIONS: Migration[] = [
   DROP TABLE oscar_best_picture;
   DELETE FROM sync_meta WHERE key = 'oscar_synced_at';
   `,
+  // v6: orçamento e bilheteria (US$, como a TMDB informa). Os filmes já sincronizados
+  // voltam para a fila de detalhes para preencher as colunas na próxima sync.
+  `
+  ALTER TABLE movie ADD COLUMN budget INTEGER;
+  ALTER TABLE movie ADD COLUMN revenue INTEGER;
+  UPDATE movie SET details_fetched_at = NULL;
+  `,
 ];
 
 export const DATABASE_NAME = 'vflix.db';

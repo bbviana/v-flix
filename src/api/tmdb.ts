@@ -72,6 +72,8 @@ export type TmdbMovieDetails = {
   poster_path: string | null;
   backdrop_path: string | null;
   popularity: number;
+  budget: number;
+  revenue: number;
   genres: TmdbGenre[];
   production_countries: { iso_3166_1: string; name: string }[];
   external_ids?: { imdb_id: string | null };
